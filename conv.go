@@ -35,7 +35,7 @@ type Conv struct {
 	// using Conv.ConvertType() .
 	//
 	// When converting a map to a struct, each field name of the struct will be indexed using this function.
-	// When converting a struct to another, field names and values from the souce struct will be put into a map,
+	// When converting a struct to another, field names and values from the source struct will be put into a map,
 	// then each field name of the destination struct will be indexed with the map.
 	//
 	// If this function is nil, the Go built-in indexer for maps will be used.
@@ -69,7 +69,7 @@ func DefaultStringToTime(v string) (time.Time, error) {
 	return time.Parse(time.RFC3339Nano, v)
 }
 
-func (c Conv) doSpilitString(v string) []string {
+func (c Conv) doSplitString(v string) []string {
 	var parts []string
 	if c.SplitStringHelper == nil {
 		parts = append(parts, v)
@@ -102,7 +102,7 @@ func (c Conv) StringToSlice(v string, simpleSliceType reflect.Type) (interface{}
 	const fnName = "StringToSlice"
 
 	if simpleSliceType.Kind() != reflect.Slice {
-		return nil, errForFunction(fnName, "the destiniation type must be slice, got %v", simpleSliceType)
+		return nil, errForFunction(fnName, "the destination type must be slice, got %v", simpleSliceType)
 	}
 
 	elemTyp := simpleSliceType.Elem()
@@ -110,7 +110,7 @@ func (c Conv) StringToSlice(v string, simpleSliceType reflect.Type) (interface{}
 		return nil, errForFunction(fnName, "cannot convert from string to %v, the element's type must be a simple type", simpleSliceType)
 	}
 
-	parts := c.doSpilitString(v)
+	parts := c.doSplitString(v)
 	dst := reflect.MakeSlice(simpleSliceType, 0, len(parts))
 	for i, elemIn := range parts {
 		elemOut, err := c.SimpleToSimple(elemIn, elemTyp)
@@ -323,9 +323,9 @@ func (c Conv) SliceToSlice(src interface{}, dstSliceTyp reflect.Type) (interface
 		return nil, errSourceShouldNotBeNil(fnName)
 	}
 
-	vsrcSlice := reflect.ValueOf(src)
-	if vsrcSlice.Kind() != reflect.Slice {
-		return nil, errForFunction(fnName, "src must be a slice, got %v", vsrcSlice.Kind())
+	vSrcSlice := reflect.ValueOf(src)
+	if vSrcSlice.Kind() != reflect.Slice {
+		return nil, errForFunction(fnName, "src must be a slice, got %v", vSrcSlice.Kind())
 	}
 
 	if dstSliceTyp.Kind() != reflect.Slice {
@@ -333,26 +333,26 @@ func (c Conv) SliceToSlice(src interface{}, dstSliceTyp reflect.Type) (interface
 	}
 
 	// A nil slice will be converted to a nil slice.
-	if vsrcSlice.IsNil() {
+	if vSrcSlice.IsNil() {
 		return reflect.Zero(dstSliceTyp).Interface(), nil
 	}
 
-	srcLen := vsrcSlice.Len()
+	srcLen := vSrcSlice.Len()
 	dstElemTyp := dstSliceTyp.Elem()
-	vdstSlice := reflect.MakeSlice(dstSliceTyp, 0, srcLen)
+	vDstSlice := reflect.MakeSlice(dstSliceTyp, 0, srcLen)
 
 	for i := 0; i < srcLen; i++ {
-		vsrcElem := vsrcSlice.Index(i)
-		srcElem := vsrcElem.Interface()
-		vdstElem, err := c.ConvertType(srcElem, dstElemTyp)
+		vSrcElem := vSrcSlice.Index(i)
+		srcElem := vSrcElem.Interface()
+		vDstElem, err := c.ConvertType(srcElem, dstElemTyp)
 		if err != nil {
 			return nil, errForFunction(fnName, "cannot convert to %v, at index %v : %v", dstSliceTyp, i, err.Error())
 		}
 
-		vdstSlice = reflect.Append(vdstSlice, reflect.ValueOf(vdstElem))
+		vDstSlice = reflect.Append(vDstSlice, reflect.ValueOf(vDstElem))
 	}
 
-	return vdstSlice.Interface(), nil
+	return vDstSlice.Interface(), nil
 }
 
 // MapToStruct converts a map[string]interface{} to a struct.
@@ -369,7 +369,7 @@ func (c Conv) MapToStruct(m map[string]interface{}, dstTyp reflect.Type) (interf
 
 	k := dstTyp.Kind()
 	if k != reflect.Struct {
-		return nil, errForFunction(fnName, "the destination type must be stuct, got %v", dstTyp)
+		return nil, errForFunction(fnName, "the destination type must be struct, got %v", dstTyp)
 	}
 
 	dst := reflect.New(dstTyp).Elem()
@@ -438,13 +438,13 @@ func (c Conv) MapToMap(m interface{}, typ reflect.Type) (interface{}, error) {
 		srcKey := iter.Key().Interface()
 		dstKey, err := c.ConvertType(srcKey, dstKeyType)
 		if err != nil {
-			return nil, errForFunction(fnName, "cannnot covert key '%v' to %v: %v", srcKey, dstKeyType, err.Error())
+			return nil, errForFunction(fnName, "cannot covert key '%v' to %v: %v", srcKey, dstKeyType, err.Error())
 		}
 
 		srcVal := iter.Value().Interface()
 		dstVal, err := c.ConvertType(srcVal, dstValueType)
 		if err != nil {
-			return nil, errForFunction(fnName, "cannnot covert value of key '%v' to %v: %v", srcKey, dstValueType, err.Error())
+			return nil, errForFunction(fnName, "cannot covert value of key '%v' to %v: %v", srcKey, dstValueType, err.Error())
 		}
 
 		dst.SetMapIndex(reflect.ValueOf(dstKey), reflect.ValueOf(dstVal))
@@ -453,7 +453,7 @@ func (c Conv) MapToMap(m interface{}, typ reflect.Type) (interface{}, error) {
 	return dst.Interface(), nil
 }
 
-// StructToMap is partially like json.Unmashal(json.Marshal(v), &someMap) . It converts a struct to map[string]interface{} .
+// StructToMap is partially like json.Unmarshal(json.Marshal(v), &someMap) . It converts a struct to map[string]interface{} .
 //
 // Each value of exported field will be processed recursively with an internal function f() , which:
 //  - Simple types, for which IsSimpleType() returns true, will be cloned into the map directly.
@@ -513,7 +513,7 @@ func (c Conv) convertToMapValue(fv reflect.Value) (reflect.Value, error) {
 
 	switch fv.Kind() {
 	case reflect.Invalid:
-		// Will be ingored in the outer loop.
+		// Will be ignored in the outer loop.
 		return reflect.ValueOf(nil), nil
 
 	case reflect.Struct:
@@ -660,9 +660,9 @@ func (c Conv) StructToStruct(src interface{}, dstTyp reflect.Type) (interface{},
 	}
 
 	m := make(map[string]interface{})
-	vsrc := reflect.ValueOf(src)
-	for i := 0; i < vsrc.NumField(); i++ {
-		f := vsrc.Field(i)
+	vSrc := reflect.ValueOf(src)
+	for i := 0; i < vSrc.NumField(); i++ {
+		f := vSrc.Field(i)
 		if !f.CanInterface() {
 			continue
 		}
@@ -671,16 +671,16 @@ func (c Conv) StructToStruct(src interface{}, dstTyp reflect.Type) (interface{},
 		m[fName] = f.Interface()
 	}
 
-	vdst := reflect.New(dstTyp).Elem()
-	for i := 0; i < vdst.NumField(); i++ {
+	vDst := reflect.New(dstTyp).Elem()
+	for i := 0; i < vDst.NumField(); i++ {
 		fType := dstTyp.Field(i)
 		v, ok := c.doIndexName(m, fType.Name)
 		if !ok {
 			continue
 		}
 
-		vfield := vdst.Field(i)
-		if !vfield.CanSet() {
+		vField := vDst.Field(i)
+		if !vField.CanSet() {
 			continue
 		}
 
@@ -689,10 +689,10 @@ func (c Conv) StructToStruct(src interface{}, dstTyp reflect.Type) (interface{},
 			return nil, errForFunction(fnName, "error on converting field %v: %v", fType.Name, err.Error())
 		}
 
-		vfield.Set(reflect.ValueOf(dstValue))
+		vField.Set(reflect.ValueOf(dstValue))
 	}
 
-	return vdst.Interface(), nil
+	return vDst.Interface(), nil
 }
 
 // ConvertType is the core function of Conv . It converts the given value to the destination type.

@@ -15,7 +15,7 @@ import (
 // using Conv.ConvertType() .
 //
 // When converting a map to a struct, each field name of the struct will be indexed using this function.
-// When converting a struct to another, field names and values from the souce struct will be put into a map,
+// When converting a struct to another, field names and values from the source struct will be put into a map,
 // then each field name of the destination struct will be indexed with the map.
 //
 type IndexNameFunc func(m map[string]interface{}, key string) (value interface{}, ok bool)

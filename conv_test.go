@@ -177,7 +177,7 @@ func TestConv_SimpleToString(t *testing.T) {
 		{"err2", false, args{map[string]interface{}{}}, "", true},
 		{"err-cust", true, args{time.Unix(0, 0)}, "", true},
 
-		// Custome Conv.TimeToStringHelper() .
+		// Customized Conv.TimeToStringHelper() .
 		{"cus-time", true, args{time.Date(2020, 1, 6, 13, 6, 22, int(321*time.Millisecond), time.UTC)}, "1-06,2020 13:06:22.321", false},
 	}
 
@@ -203,10 +203,10 @@ func TestConv_SimpleToString(t *testing.T) {
 }
 
 func TestConv_SimpleToSimple(t *testing.T) {
-	spdate := time.Date(2021, 6, 3, 13, 21, 22, 54321, time.UTC).Local()
-	spdateWithoutNano := time.Unix(spdate.Unix(), 0).Local()
+	spDate := time.Date(2021, 6, 3, 13, 21, 22, 54321, time.UTC).Local()
+	spDateWithoutNano := time.Unix(spDate.Unix(), 0).Local()
 	customTimeConv := Conv{
-		StringToTimeHelper: func(v string) (time.Time, error) { return spdate, nil },
+		StringToTimeHelper: func(v string) (time.Time, error) { return spDate, nil },
 		TimeToStringHelper: func(t time.Time) (string, error) {
 			if t == time.Unix(0, 0) {
 				return "", errors.New("we make a custom error for zero time")
@@ -251,20 +251,20 @@ func TestConv_SimpleToSimple(t *testing.T) {
 		{"complex128-uint16", false, args{complex128(5544 + 0i), reflect.TypeOf(uint16(0))}, uint16(5544), ""},
 
 		// time
-		{"utc-local", false, args{spdate.UTC(), reflect.TypeOf(spdate)}, spdate, ""},
-		{"time-string", false, args{spdate, reflect.TypeOf("")}, spdate.Format(time.RFC3339), ""},
-		{"time-string-custom", true, args{spdate, reflect.TypeOf("")}, "20210603", ""},
-		{"string-time", false, args{"2021-06-03T13:21:22Z", reflect.TypeOf(spdate)}, spdateWithoutNano, ""},
-		{"string-time-custom", true, args{"any", reflect.TypeOf(spdate)}, spdate, ""}, // always returns spdate
-		{"time-int", false, args{spdate, reflect.TypeOf(0)}, int(spdate.Unix()), ""},
-		{"time-float", false, args{spdate, reflect.TypeOf(0.0)}, float64(spdate.Unix()), ""},
-		{"int-time", false, args{1622726482, reflect.TypeOf(spdate)}, spdateWithoutNano, ""},
+		{"utc-local", false, args{spDate.UTC(), reflect.TypeOf(spDate)}, spDate, ""},
+		{"time-string", false, args{spDate, reflect.TypeOf("")}, spDate.Format(time.RFC3339), ""},
+		{"time-string-custom", true, args{spDate, reflect.TypeOf("")}, "20210603", ""},
+		{"string-time", false, args{"2021-06-03T13:21:22Z", reflect.TypeOf(spDate)}, spDateWithoutNano, ""},
+		{"string-time-custom", true, args{"any", reflect.TypeOf(spDate)}, spDate, ""}, // always returns spDate
+		{"time-int", false, args{spDate, reflect.TypeOf(0)}, int(spDate.Unix()), ""},
+		{"time-float", false, args{spDate, reflect.TypeOf(0.0)}, float64(spDate.Unix()), ""},
+		{"int-time", false, args{1622726482, reflect.TypeOf(spDate)}, spDateWithoutNano, ""},
 
 		// err
 		{"err-nil", false, args{nil, reflect.TypeOf(1)}, nil, "^conv.SimpleToSimple: the source value should not be nil$"},
-		{"err-time-from-string", false, args{"date", reflect.TypeOf(spdate)}, nil, "^conv.SimpleToSimple: .+"},
-		{"err-time-from-complex", false, args{1 + 3i, reflect.TypeOf(spdate)}, nil, "lost imaginary part"},
-		{"err-time-to-int8", false, args{spdate, reflect.TypeOf(int8(0))}, nil, `value overflow`},
+		{"err-time-from-string", false, args{"date", reflect.TypeOf(spDate)}, nil, "^conv.SimpleToSimple: .+"},
+		{"err-time-from-complex", false, args{1 + 3i, reflect.TypeOf(spDate)}, nil, "lost imaginary part"},
+		{"err-time-to-int8", false, args{spDate, reflect.TypeOf(int8(0))}, nil, `value overflow`},
 		{"err-struct-int", false, args{S1{}, reflect.TypeOf(0)}, nil, `cannot convert from conv\.S1 to int`},
 		{"err-struct-struct", false, args{S1{}, reflect.TypeOf(S1{})}, nil, `cannot convert from conv\.S1 to conv\.S1`},
 		{"err-cust", true, args{time.Unix(0, 0), reflect.TypeOf("")}, nil, "we make a custom error for zero time"},
@@ -402,7 +402,7 @@ func TestConv_MapToStruct(t *testing.T) {
 				reflect.TypeOf(1),
 			},
 			nil,
-			"type must be stuct",
+			"type must be struct",
 		},
 
 		{
@@ -551,7 +551,7 @@ func TestConv_MapToMap(t *testing.T) {
 				reflect.TypeOf(map[int]int{}),
 			},
 			nil,
-			"cannnot covert key 'a' to int: .+",
+			"cannot covert key 'a' to int: .+",
 		},
 
 		{
@@ -561,7 +561,7 @@ func TestConv_MapToMap(t *testing.T) {
 				reflect.TypeOf(map[string]int{}),
 			},
 			nil,
-			"cannnot covert value of key 'aa' to int: .+",
+			"cannot covert value of key 'aa' to int: .+",
 		},
 	}
 	for _, tt := range tests {
@@ -984,29 +984,29 @@ func TestConv_ConvertType_ConvertPointers(t *testing.T) {
 				return
 			}
 
-			var vgot interface{}
-			var vdep int
+			var valGot interface{}
+			var valDepth int
 			switch v := got.(type) {
 			case int:
-				vgot, vdep = v, 0
+				valGot, valDepth = v, 0
 			case *int:
-				vgot, vdep = *v, 1
+				valGot, valDepth = *v, 1
 			case **int:
-				vgot, vdep = **v, 2
+				valGot, valDepth = **v, 2
 			case ***int:
-				vgot, vdep = ***v, 3
+				valGot, valDepth = ***v, 3
 			case string:
-				vgot, vdep = v, 0
+				valGot, valDepth = v, 0
 			case *string:
-				vgot, vdep = *v, 1
+				valGot, valDepth = *v, 1
 			case **string:
-				vgot, vdep = **v, 2
+				valGot, valDepth = **v, 2
 			case ***string:
-				vgot, vdep = ***v, 3
+				valGot, valDepth = ***v, 3
 			}
 
-			if vgot != tt.wantVal || vdep != tt.wantDepth {
-				t.Errorf("ConvertType() = val %v, depth %v, want val %v depth %v", vgot, vdep, tt.wantVal, tt.wantDepth)
+			if valGot != tt.wantVal || valDepth != tt.wantDepth {
+				t.Errorf("ConvertType() = val %v, depth %v, want val %v depth %v", valGot, valDepth, tt.wantVal, tt.wantDepth)
 			}
 		})
 	}
@@ -1030,7 +1030,7 @@ func TestConv_ConvertType_MapToStructWithPointers(t *testing.T) {
 	}
 
 	// reflect.DeepEqual() doesn't compare the underlying values of pointers.
-	// We compare the fields manuallly.
+	// We compare the fields manually.
 	out := *res.(*P2)
 	if out.inner != nil {
 		t.Error("inner != nil")
@@ -1312,14 +1312,14 @@ func TestConv_Convert_Ptr(t *testing.T) {
 		}
 	})
 
-	t.Run("string-pint", func(t *testing.T) {
+	t.Run("string-p-int", func(t *testing.T) {
 		Conv{}.Convert("-54321", pi)
 		if *pi != -54321 {
 			t.Errorf("want %v, got %v", i, *pi)
 		}
 	})
 
-	t.Run("string-ppint", func(t *testing.T) {
+	t.Run("string-pp-int", func(t *testing.T) {
 		Conv{}.Convert("12345", ppi)
 		if **ppi != 12345 {
 			t.Errorf("want %v, got %v", i, *pi)

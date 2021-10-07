@@ -96,6 +96,7 @@ func Test_camelSnakeCaseCompare(t *testing.T) {
 		sy   string
 		want bool
 	}{
+		// cSpell:disable
 		{"", "", true},
 		{"  ", "  ", true},
 		{"", "1", false},
@@ -132,6 +133,7 @@ func Test_camelSnakeCaseCompare(t *testing.T) {
 		{" a_b c ", " a_b c ", true},
 		{"AaBbCc", "Aa BbCc", false},
 		{"a_b", "a_b ", false},
+		// cSpell:enable
 	}
 	for _, tt := range tests {
 		t.Run(fmt.Sprint("(", tt.sx, ":", tt.sy, ")"), func(t *testing.T) {

@@ -21,7 +21,7 @@ func TestConv_primitiveToBool(t *testing.T) {
 		{"0+1i", 0 + 1i, true, false},
 		{"1+0i", 1 + 0i, true, false},
 
-		{"err-emptye-string", "", false, true},
+		{"err-empty-string", "", false, true},
 		{"err-wrong-string", "not-supported", false, true},
 		{"err-struct", struct{}{}, false, true},
 		{"err-slice", make([]struct{}, 0), false, true},

@@ -39,7 +39,7 @@ func (c Conv) primitiveToBool(v interface{}) (bool, error) {
 func (c Conv) primitiveToString(v interface{}) string {
 	switch vv := v.(type) {
 	case bool:
-		// The default string representation for bools are true/false, which is not compatiable
+		// The default string representation for booleans are true/false, which is not compatible
 		// to other number types. To increase compatibility, we use 0/1 instead, they can be recognized
 		// by strconv.ParseBool() , and can be converted to other number types.
 		if vv {
