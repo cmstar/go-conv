@@ -42,7 +42,9 @@ type P2 struct {
 
 func TestConv_StringToSlice(t *testing.T) {
 	customConv := Conv{
-		SplitStringHelper: func(v string) []string { return strings.Split(v, "~") },
+		Config: Config{
+			StringSplitter: func(v string) []string { return strings.Split(v, "~") },
+		},
 	}
 
 	type args struct {
@@ -146,11 +148,13 @@ func TestConv_SimpleToBool(t *testing.T) {
 
 func TestConv_SimpleToString(t *testing.T) {
 	customTimeConv := Conv{
-		TimeToStringHelper: func(t time.Time) (string, error) {
-			if t == time.Unix(0, 0) {
-				return "", errors.New("we make a custom error for zero time")
-			}
-			return t.Format("1-02,2006 15:04:05.000"), nil
+		Config: Config{
+			TimeToString: func(t time.Time) (string, error) {
+				if t == time.Unix(0, 0) {
+					return "", errors.New("we make a custom error for zero time")
+				}
+				return t.Format("1-02,2006 15:04:05.000"), nil
+			},
 		},
 	}
 
@@ -177,7 +181,7 @@ func TestConv_SimpleToString(t *testing.T) {
 		{"err2", false, args{map[string]interface{}{}}, "", true},
 		{"err-cust", true, args{time.Unix(0, 0)}, "", true},
 
-		// Customized Conv.TimeToStringHelper() .
+		// Customized Conv.Config.TimeToString() .
 		{"cus-time", true, args{time.Date(2020, 1, 6, 13, 6, 22, int(321*time.Millisecond), time.UTC)}, "1-06,2020 13:06:22.321", false},
 	}
 
@@ -206,12 +210,14 @@ func TestConv_SimpleToSimple(t *testing.T) {
 	spDate := time.Date(2021, 6, 3, 13, 21, 22, 54321, time.UTC).Local()
 	spDateWithoutNano := time.Unix(spDate.Unix(), 0).Local()
 	customTimeConv := Conv{
-		StringToTimeHelper: func(v string) (time.Time, error) { return spDate, nil },
-		TimeToStringHelper: func(t time.Time) (string, error) {
-			if t == time.Unix(0, 0) {
-				return "", errors.New("we make a custom error for zero time")
-			}
-			return t.Format("20060102"), nil
+		Config: Config{
+			StringToTime: func(v string) (time.Time, error) { return spDate, nil },
+			TimeToString: func(t time.Time) (string, error) {
+				if t == time.Unix(0, 0) {
+					return "", errors.New("we make a custom error for zero time")
+				}
+				return t.Format("20060102"), nil
+			},
 		},
 	}
 
@@ -348,7 +354,11 @@ func TestConv_SliceToSlice(t *testing.T) {
 }
 
 func TestConv_MapToStruct(t *testing.T) {
-	caseInsensitiveConv := Conv{IndexNameHelper: CaseInsensitiveIndexName}
+	caseInsensitiveConv := Conv{
+		Config: Config{
+			NameIndexer: CaseInsensitiveIndexName,
+		},
+	}
 
 	type args struct {
 		m      map[string]interface{}
@@ -416,7 +426,7 @@ func TestConv_MapToStruct(t *testing.T) {
 			"error on converting field 'F': .+",
 		},
 
-		// Test custom IndexNameHelper.
+		// Test custom IndexName.
 		{
 			"ok1-ci",
 			true,
@@ -815,7 +825,11 @@ func TestConv_StructToMap(t *testing.T) {
 }
 
 func TestConv_StructToStruct(t *testing.T) {
-	caseInsensitiveConv := Conv{IndexNameHelper: CaseInsensitiveIndexName}
+	caseInsensitiveConv := Conv{
+		Config: Config{
+			NameIndexer: CaseInsensitiveIndexName,
+		},
+	}
 
 	type ss2 struct {
 		OUt float64
@@ -889,7 +903,7 @@ func TestConv_StructToStruct(t *testing.T) {
 			"",
 		},
 
-		// Test custom IndexNameHelper .
+		// Test custom IndexName .
 		{
 			"custom-name-indexer",
 			true,

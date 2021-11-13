@@ -8,26 +8,32 @@ import (
 )
 
 // Conv provides a group of functions to convert between simple types, maps, slices and structs.
-// A new instance with default values has default conversion behavior:
+// A new instance with default values is ready for use, it has the default behavior:
 //   Conv{}.ConvertType(...)
 //
-// Don't call functions directly which ends with 'Helper', they are for configuration and are called internally
-// by other functions, such as Convert()/ConvertType()/MapToStruct() .
-// They can be set in order to customize the conversion behavior.
-// e.g., this Conv instance uses a built-in function for IndexNameHelper and a custom TimeToStringHelper function.
+// The field Config is used to customize the conversion behavior.
+// e.g., this Conv instance uses a built-in function for Config.NameIndexer and a custom TimeToString function.
 //   c:= Conv{
-//       IndexNameHelper: CaseInsensitiveIndexName,
-//       TimeToStringHelper: func(t time.Time) (string, error) { return t.Format(time.RFC1123), nil },
+//       Config: Config {
+//           IndexName: CaseInsensitiveIndexName,
+//           TimeToString: func(t time.Time) (string, error) { return t.Format(time.RFC1123), nil },
+//       },
 //   }
 //
 type Conv struct {
-	// SplitStringHelper is the function used to split the string into elements of the slice when converting a string to a slice.
+	// Config is used to customize the conversion behavior.
+	Config Config
+}
+
+// Config is used to customize the conversion behavior of Conv .
+type Config struct {
+	// StringSplitter is the function used to split the string into elements of the slice when converting a string to a slice.
 	// It is called internally by Convert, ConvertType or other functions.
 	// Set this field if customization of the conversion is needed.
 	// If this field is nil, the value will not be splitted.
-	SplitStringHelper func(v string) []string
+	StringSplitter func(v string) []string
 
-	// IndexNameHelper is the function used to match names when converting from map to struct or from struct to struct.
+	// NameIndexer is the function used to match names when converting from map to struct or from struct to struct.
 	//
 	// If the given name can match, the function returns the value from the source map with @ok=true;
 	// otherwise returns (nil, false) .
@@ -44,19 +50,19 @@ type Conv struct {
 	//
 	// There are some predefined indexer functions, such as CaseInsensitiveIndexName, CamelSnakeCaseIndexName.
 	//
-	IndexNameHelper IndexNameFunc
+	NameIndexer IndexNameFunc
 
-	// TimeToStringHelper formats the given time.
+	// TimeToString formats the given time.
 	// It is called internally by Convert, ConvertType or other functions.
 	// Set this field if need to customize the procedure.
 	// If this field is nil, the function DefaultTimeToString() will be used.
-	TimeToStringHelper func(t time.Time) (string, error)
+	TimeToString func(t time.Time) (string, error)
 
-	// StringToTimeHelper parses the given string and returns the time it represends.
+	// StringToTime parses the given string and returns the time it represends.
 	// It is called internally by Convert, ConvertType or other functions.
 	// Set this field if need to customize the procedure.
 	// If this field is nil, the function DefaultStringToTime() will be used.
-	StringToTimeHelper func(v string) (time.Time, error)
+	StringToTime func(v string) (time.Time, error)
 }
 
 // DefaultTimeToString formats time using the time.RFC3339 format.
@@ -71,24 +77,24 @@ func DefaultStringToTime(v string) (time.Time, error) {
 
 func (c Conv) doSplitString(v string) []string {
 	var parts []string
-	if c.SplitStringHelper == nil {
+	if c.Config.StringSplitter == nil {
 		parts = append(parts, v)
 	} else {
-		parts = c.SplitStringHelper(v)
+		parts = c.Config.StringSplitter(v)
 	}
 	return parts
 }
 
 func (c Conv) doTimeToString(t time.Time) (string, error) {
-	if c.TimeToStringHelper != nil {
-		return c.TimeToStringHelper(t)
+	if c.Config.TimeToString != nil {
+		return c.Config.TimeToString(t)
 	}
 	return DefaultTimeToString(t)
 }
 
 func (c Conv) doStringToTime(v string) (time.Time, error) {
-	if c.StringToTimeHelper != nil {
-		return c.StringToTimeHelper(v)
+	if c.Config.StringToTime != nil {
+		return c.Config.StringToTime(v)
 	}
 	return DefaultStringToTime(v)
 }
@@ -96,7 +102,7 @@ func (c Conv) doStringToTime(v string) (time.Time, error) {
 // StringToSlice converts a string to a slice.
 // The elements of the slice must be simple type, for which IsSimpleType() returns true.
 //
-// Conv.SplitStringHelper() is used to split the string.
+// Conv.Config.StringSplitter() is used to split the string.
 //
 func (c Conv) StringToSlice(v string, simpleSliceType reflect.Type) (interface{}, error) {
 	const fnName = "StringToSlice"
@@ -161,7 +167,7 @@ func (c Conv) SimpleToBool(simple interface{}) (bool, error) {
 // SimpleToString converts the given value to a string.
 // The value must be a simple type, for which IsSimpleType() returns true.
 //
-// Conv.StringToTimeHelper() is used to format times.
+// Conv.Config.StringToTime() is used to format times.
 // Specially, booleans are converted to 0/1, not the default foramt true/false.
 //
 func (c Conv) SimpleToString(v interface{}) (string, error) {
@@ -357,7 +363,7 @@ func (c Conv) SliceToSlice(src interface{}, dstSliceTyp reflect.Type) (interface
 
 // MapToStruct converts a map[string]interface{} to a struct.
 //
-// Each exported field of the struct is indexed from the map by name using Conv.IndexNameHelper() , if the name exists,
+// Each exported field of the struct is indexed from the map by name using Conv.Config.NameIndexer() , if the name exists,
 // the corresponding value is converted using Conv.ConvertType() .
 //
 func (c Conv) MapToStruct(m map[string]interface{}, dstTyp reflect.Type) (interface{}, error) {
@@ -400,12 +406,12 @@ func (c Conv) MapToStruct(m map[string]interface{}, dstTyp reflect.Type) (interf
 }
 
 func (c Conv) doIndexName(m map[string]interface{}, k string) (interface{}, bool) {
-	if c.IndexNameHelper == nil {
+	if c.Config.NameIndexer == nil {
 		v, ok := m[k]
 		return v, ok
 	}
 
-	return c.IndexNameHelper(m, k)
+	return c.Config.NameIndexer(m, k)
 }
 
 // MapToMap converts a map to another map.
@@ -637,7 +643,7 @@ func (c Conv) dertermineSliceTypeForMapValue(srcSliceType reflect.Type) (dstSlic
 // If the given value is nil, returns nil and an error.
 //
 // When converting, all fields of the source struct is to be stored in a map[string]interface{} ,
-// then each field of the destination struct is indexed from the map by name using Conv.IndexNameHelper() ,
+// then each field of the destination struct is indexed from the map by name using Conv.Config.NameIndexer() ,
 // if the name exists, the value is converted using Conv.ConvertType() .
 //
 // This function can be used to deep-clone a struct.
