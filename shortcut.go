@@ -7,7 +7,7 @@ import (
 
 // Provides a group of shortcut methods for convenient use, to avoid initializing the Conv struct.
 
-var defaultConv = Conv{}
+var defaultConv = new(Conv)
 
 // ConvertType is equivalent to Conv{}.ConvertType() .
 func ConvertType(src interface{}, dstTyp reflect.Type) (interface{}, error) {

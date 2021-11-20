@@ -10,7 +10,7 @@ import (
 // Implements conversions between booleans, strings and numbers.
 
 // primitiveToBool convert zero values to false, non-zero values to true.
-func (c Conv) primitiveToBool(v interface{}) (bool, error) {
+func (c *Conv) primitiveToBool(v interface{}) (bool, error) {
 	val := reflect.ValueOf(v)
 	kind := val.Kind()
 	switch {
@@ -36,7 +36,7 @@ func (c Conv) primitiveToBool(v interface{}) (bool, error) {
 	return false, errCantConvertTo(v, "bool")
 }
 
-func (c Conv) primitiveToString(v interface{}) string {
+func (c *Conv) primitiveToString(v interface{}) string {
 	switch vv := v.(type) {
 	case bool:
 		// The default string representation for booleans are true/false, which is not compatible
@@ -69,7 +69,7 @@ func (c Conv) primitiveToString(v interface{}) string {
 	return fmt.Sprint(v)
 }
 
-func (c Conv) doPrimitiveToInt64(v interface{}, dstType string) (int64, error) {
+func (c *Conv) doPrimitiveToInt64(v interface{}, dstType string) (int64, error) {
 	val := reflect.ValueOf(v)
 	kind := val.Kind()
 	switch {
@@ -112,7 +112,7 @@ func (c Conv) doPrimitiveToInt64(v interface{}, dstType string) (int64, error) {
 	return 0, errCantConvertTo(v, dstType)
 }
 
-func (c Conv) doFloat64ToInt64(f float64, dstType string) (int64, error) {
+func (c *Conv) doFloat64ToInt64(f float64, dstType string) (int64, error) {
 	if f < math.MinInt64 || f > math.MaxInt64 {
 		return 0, errValueOverflow(f, dstType)
 	}
@@ -124,11 +124,11 @@ func (c Conv) doFloat64ToInt64(f float64, dstType string) (int64, error) {
 	return int64(f), nil
 }
 
-func (c Conv) primitiveToInt64(v interface{}) (int64, error) {
+func (c *Conv) primitiveToInt64(v interface{}) (int64, error) {
 	return c.doPrimitiveToInt64(v, "int64")
 }
 
-func (c Conv) primitiveToInt(v interface{}) (int, error) {
+func (c *Conv) primitiveToInt(v interface{}) (int, error) {
 	num, err := c.doPrimitiveToInt64(v, "int")
 	if err != nil {
 		return 0, err
@@ -141,7 +141,7 @@ func (c Conv) primitiveToInt(v interface{}) (int, error) {
 	return int(num), nil
 }
 
-func (c Conv) primitiveToInt32(v interface{}) (int32, error) {
+func (c *Conv) primitiveToInt32(v interface{}) (int32, error) {
 	num, err := c.doPrimitiveToInt64(v, "int32")
 	if err != nil {
 		return 0, err
@@ -154,7 +154,7 @@ func (c Conv) primitiveToInt32(v interface{}) (int32, error) {
 	return int32(num), nil
 }
 
-func (c Conv) primitiveToInt16(v interface{}) (int16, error) {
+func (c *Conv) primitiveToInt16(v interface{}) (int16, error) {
 	num, err := c.doPrimitiveToInt64(v, "int16")
 	if err != nil {
 		return 0, err
@@ -167,7 +167,7 @@ func (c Conv) primitiveToInt16(v interface{}) (int16, error) {
 	return int16(num), nil
 }
 
-func (c Conv) primitiveToInt8(v interface{}) (int8, error) {
+func (c *Conv) primitiveToInt8(v interface{}) (int8, error) {
 	num, err := c.doPrimitiveToInt64(v, "int8")
 	if err != nil {
 		return 0, err
@@ -180,7 +180,7 @@ func (c Conv) primitiveToInt8(v interface{}) (int8, error) {
 	return int8(num), nil
 }
 
-func (c Conv) doPrimitiveToUint64(v interface{}, dstType string) (uint64, error) {
+func (c *Conv) doPrimitiveToUint64(v interface{}, dstType string) (uint64, error) {
 	val := reflect.ValueOf(v)
 	kind := val.Kind()
 	switch {
@@ -223,7 +223,7 @@ func (c Conv) doPrimitiveToUint64(v interface{}, dstType string) (uint64, error)
 	return 0, errCantConvertTo(v, dstType)
 }
 
-func (c Conv) doFloatToUint(f float64, dstType string) (uint64, error) {
+func (c *Conv) doFloatToUint(f float64, dstType string) (uint64, error) {
 	if f < 0 || f > math.MaxUint64 {
 		return 0, errValueOverflow(f, dstType)
 	}
@@ -235,11 +235,11 @@ func (c Conv) doFloatToUint(f float64, dstType string) (uint64, error) {
 	return uint64(f), nil
 }
 
-func (c Conv) primitiveToUint64(v interface{}) (uint64, error) {
+func (c *Conv) primitiveToUint64(v interface{}) (uint64, error) {
 	return c.doPrimitiveToUint64(v, "uint64")
 }
 
-func (c Conv) primitiveToUint(v interface{}) (uint, error) {
+func (c *Conv) primitiveToUint(v interface{}) (uint, error) {
 	num, err := c.doPrimitiveToUint64(v, "uint")
 	if err != nil {
 		return 0, err
@@ -252,7 +252,7 @@ func (c Conv) primitiveToUint(v interface{}) (uint, error) {
 	return uint(num), nil
 }
 
-func (c Conv) primitiveToUint32(v interface{}) (uint32, error) {
+func (c *Conv) primitiveToUint32(v interface{}) (uint32, error) {
 	num, err := c.doPrimitiveToUint64(v, "uint32")
 	if err != nil {
 		return 0, err
@@ -265,7 +265,7 @@ func (c Conv) primitiveToUint32(v interface{}) (uint32, error) {
 	return uint32(num), nil
 }
 
-func (c Conv) primitiveToUint16(v interface{}) (uint16, error) {
+func (c *Conv) primitiveToUint16(v interface{}) (uint16, error) {
 	num, err := c.doPrimitiveToUint64(v, "uint16")
 	if err != nil {
 		return 0, err
@@ -278,7 +278,7 @@ func (c Conv) primitiveToUint16(v interface{}) (uint16, error) {
 	return uint16(num), nil
 }
 
-func (c Conv) primitiveToUint8(v interface{}) (uint8, error) {
+func (c *Conv) primitiveToUint8(v interface{}) (uint8, error) {
 	num, err := c.doPrimitiveToUint64(v, "uint8")
 	if err != nil {
 		return 0, err
@@ -291,7 +291,7 @@ func (c Conv) primitiveToUint8(v interface{}) (uint8, error) {
 	return uint8(num), nil
 }
 
-func (c Conv) doPrimitiveToFloat64(v interface{}, dstType string) (float64, error) {
+func (c *Conv) doPrimitiveToFloat64(v interface{}, dstType string) (float64, error) {
 	val := reflect.ValueOf(v)
 	kind := val.Kind()
 	switch {
@@ -327,11 +327,11 @@ func (c Conv) doPrimitiveToFloat64(v interface{}, dstType string) (float64, erro
 	return 0, errCantConvertTo(v, dstType)
 }
 
-func (c Conv) primitiveToFloat64(v interface{}) (float64, error) {
+func (c *Conv) primitiveToFloat64(v interface{}) (float64, error) {
 	return c.doPrimitiveToFloat64(v, "float64")
 }
 
-func (c Conv) primitiveToFloat32(v interface{}) (float32, error) {
+func (c *Conv) primitiveToFloat32(v interface{}) (float32, error) {
 	num, err := c.doPrimitiveToFloat64(v, "float32")
 	if err != nil {
 		return 0, err
@@ -344,7 +344,7 @@ func (c Conv) primitiveToFloat32(v interface{}) (float32, error) {
 	return float32(num), nil
 }
 
-func (c Conv) doPrimitiveToComplex128(v interface{}, dstType string) (complex128, error) {
+func (c *Conv) doPrimitiveToComplex128(v interface{}, dstType string) (complex128, error) {
 	val := reflect.ValueOf(v)
 	kind := val.Kind()
 	switch {
@@ -374,11 +374,11 @@ func (c Conv) doPrimitiveToComplex128(v interface{}, dstType string) (complex128
 	return 0, errCantConvertTo(v, dstType)
 }
 
-func (c Conv) primitiveToComplex128(v interface{}) (complex128, error) {
+func (c *Conv) primitiveToComplex128(v interface{}) (complex128, error) {
 	return c.doPrimitiveToComplex128(v, "complex128")
 }
 
-func (c Conv) primitiveToComplex64(v interface{}) (complex64, error) {
+func (c *Conv) primitiveToComplex64(v interface{}) (complex64, error) {
 	num, err := c.doPrimitiveToComplex128(v, "complex64")
 	if err != nil {
 		return 0, err

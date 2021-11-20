@@ -41,7 +41,7 @@ type P2 struct {
 }
 
 func TestConv_StringToSlice(t *testing.T) {
-	customConv := Conv{
+	customConv := &Conv{
 		Config: Config{
 			StringSplitter: func(v string) []string { return strings.Split(v, "~") },
 		},
@@ -81,7 +81,7 @@ func TestConv_StringToSlice(t *testing.T) {
 			if tt.useCustomConv {
 				got, err = customConv.StringToSlice(tt.args.v, tt.args.simpleSliceType)
 			} else {
-				got, err = Conv{}.StringToSlice(tt.args.v, tt.args.simpleSliceType)
+				got, err = new(Conv).StringToSlice(tt.args.v, tt.args.simpleSliceType)
 			}
 
 			if err != nil {
@@ -134,7 +134,7 @@ func TestConv_SimpleToBool(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Conv{}.SimpleToBool(tt.args.v)
+			got, err := new(Conv).SimpleToBool(tt.args.v)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Bool() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -147,7 +147,7 @@ func TestConv_SimpleToBool(t *testing.T) {
 }
 
 func TestConv_SimpleToString(t *testing.T) {
-	customTimeConv := Conv{
+	customTimeConv := &Conv{
 		Config: Config{
 			TimeToString: func(t time.Time) (string, error) {
 				if t == time.Unix(0, 0) {
@@ -192,7 +192,7 @@ func TestConv_SimpleToString(t *testing.T) {
 			if tt.useCustConv {
 				got, err = customTimeConv.SimpleToString(tt.args.v)
 			} else {
-				got, err = Conv{}.SimpleToString(tt.args.v)
+				got, err = new(Conv).SimpleToString(tt.args.v)
 			}
 
 			if (err != nil) != tt.wantErr {
@@ -209,7 +209,7 @@ func TestConv_SimpleToString(t *testing.T) {
 func TestConv_SimpleToSimple(t *testing.T) {
 	spDate := time.Date(2021, 6, 3, 13, 21, 22, 54321, time.UTC).Local()
 	spDateWithoutNano := time.Unix(spDate.Unix(), 0).Local()
-	customTimeConv := Conv{
+	customTimeConv := &Conv{
 		Config: Config{
 			StringToTime: func(v string) (time.Time, error) { return spDate, nil },
 			TimeToString: func(t time.Time) (string, error) {
@@ -282,7 +282,7 @@ func TestConv_SimpleToSimple(t *testing.T) {
 			if tt.useCustConv {
 				got, err = customTimeConv.SimpleToSimple(tt.args.src, tt.args.dstType)
 			} else {
-				got, err = Conv{}.SimpleToSimple(tt.args.src, tt.args.dstType)
+				got, err = new(Conv).SimpleToSimple(tt.args.src, tt.args.dstType)
 			}
 
 			if err != nil {
@@ -333,7 +333,7 @@ func TestConv_SliceToSlice(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Conv{}.SliceToSlice(tt.args.src, tt.args.dstSliceTyp)
+			got, err := new(Conv).SliceToSlice(tt.args.src, tt.args.dstSliceTyp)
 
 			if err != nil {
 				if tt.errRegex == "" {
@@ -354,7 +354,7 @@ func TestConv_SliceToSlice(t *testing.T) {
 }
 
 func TestConv_MapToStruct(t *testing.T) {
-	caseInsensitiveConv := Conv{
+	caseInsensitiveConv := &Conv{
 		Config: Config{
 			NameIndexer: CaseInsensitiveIndexName,
 		},
@@ -456,7 +456,7 @@ func TestConv_MapToStruct(t *testing.T) {
 			if tt.useCustConv {
 				got, err = caseInsensitiveConv.MapToStruct(tt.args.m, tt.args.dstTyp)
 			} else {
-				got, err = Conv{}.MapToStruct(tt.args.m, tt.args.dstTyp)
+				got, err = new(Conv).MapToStruct(tt.args.m, tt.args.dstTyp)
 			}
 
 			if err != nil {
@@ -576,7 +576,7 @@ func TestConv_MapToMap(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Conv{}.MapToMap(tt.args.m, tt.args.dstTyp)
+			got, err := new(Conv).MapToMap(tt.args.m, tt.args.dstTyp)
 
 			if err != nil {
 				if tt.errRegex == "" {
@@ -804,7 +804,7 @@ func TestConv_StructToMap(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Conv{}.StructToMap(tt.args.v)
+			got, err := new(Conv).StructToMap(tt.args.v)
 
 			if err != nil {
 				if tt.errRegex == "" {
@@ -825,7 +825,7 @@ func TestConv_StructToMap(t *testing.T) {
 }
 
 func TestConv_StructToStruct(t *testing.T) {
-	caseInsensitiveConv := Conv{
+	caseInsensitiveConv := &Conv{
 		Config: Config{
 			NameIndexer: CaseInsensitiveIndexName,
 		},
@@ -919,7 +919,7 @@ func TestConv_StructToStruct(t *testing.T) {
 			if tt.useCustConv {
 				got, err = caseInsensitiveConv.StructToStruct(tt.args.src, tt.args.dstTyp)
 			} else {
-				got, err = Conv{}.StructToStruct(tt.args.src, tt.args.dstTyp)
+				got, err = new(Conv).StructToStruct(tt.args.src, tt.args.dstTyp)
 			}
 
 			if err != nil {
@@ -991,7 +991,7 @@ func TestConv_ConvertType_ConvertPointers(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Conv{}.ConvertType(tt.args.src, tt.args.dstTyp)
+			got, err := new(Conv).ConvertType(tt.args.src, tt.args.dstTyp)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ConvertType() error = %v, wantErr %v", err, tt.wantErr)
@@ -1037,7 +1037,7 @@ func TestConv_ConvertType_MapToStructWithPointers(t *testing.T) {
 		"Sl":    nil,
 		"inner": -1,
 	}
-	res, err := Conv{}.ConvertType(in, reflect.TypeOf(pp2))
+	res, err := new(Conv).ConvertType(in, reflect.TypeOf(pp2))
 	if err != nil {
 		t.Errorf("ConvertType: %s", err)
 		return
@@ -1091,7 +1091,7 @@ func TestConv_ConvertType_SliceToSlice(t *testing.T) {
 	}
 
 	dstTyp := reflect.TypeOf([]*s{})
-	out, err := Conv{}.ConvertType(in, dstTyp)
+	out, err := new(Conv).ConvertType(in, dstTyp)
 	if err != nil {
 		t.Errorf("err: %s", err.Error())
 		return
@@ -1188,7 +1188,7 @@ func TestConv_ConvertType_FlatternMap(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Conv{}.ConvertType(tt.args.src, tt.args.dstTyp)
+			got, err := new(Conv).ConvertType(tt.args.src, tt.args.dstTyp)
 
 			if err != nil {
 				if tt.errRegex == "" {
@@ -1261,7 +1261,7 @@ func TestConv_ConvertType(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Conv{}.ConvertType(tt.args.src, tt.args.dstTyp)
+			got, err := new(Conv).ConvertType(tt.args.src, tt.args.dstTyp)
 
 			if err != nil {
 				if tt.errRegex == "" {
@@ -1294,7 +1294,7 @@ func TestConv_Convert_PanicOnNil(t *testing.T) {
 		}
 	}()
 
-	Conv{}.Convert(nil, 0)
+	new(Conv).Convert(nil, 0)
 }
 
 func TestConv_Convert_PanicOnUninitialized(t *testing.T) {
@@ -1311,7 +1311,7 @@ func TestConv_Convert_PanicOnUninitialized(t *testing.T) {
 	}()
 
 	var p *int
-	Conv{}.Convert("", p)
+	new(Conv).Convert("", p)
 }
 
 func TestConv_Convert_Ptr(t *testing.T) {
@@ -1320,21 +1320,21 @@ func TestConv_Convert_Ptr(t *testing.T) {
 	ppi := &pi
 
 	t.Run("nil", func(t *testing.T) {
-		Conv{}.Convert(nil, pi)
+		new(Conv).Convert(nil, pi)
 		if *pi != 1 {
 			t.Errorf("want %v, got %v", i, *pi)
 		}
 	})
 
 	t.Run("string-p-int", func(t *testing.T) {
-		Conv{}.Convert("-54321", pi)
+		new(Conv).Convert("-54321", pi)
 		if *pi != -54321 {
 			t.Errorf("want %v, got %v", i, *pi)
 		}
 	})
 
 	t.Run("string-pp-int", func(t *testing.T) {
-		Conv{}.Convert("12345", ppi)
+		new(Conv).Convert("12345", ppi)
 		if **ppi != 12345 {
 			t.Errorf("want %v, got %v", i, *pi)
 		}
@@ -1342,7 +1342,7 @@ func TestConv_Convert_Ptr(t *testing.T) {
 }
 
 func TestConv_tryFlattenEmptyKeyMap(t *testing.T) {
-	c := Conv{}
+	c := &Conv{}
 
 	type args struct {
 		v interface{}

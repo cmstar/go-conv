@@ -28,7 +28,7 @@ func TestConv_primitiveToBool(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Conv{}.primitiveToBool(tt.args)
+			got, err := new(Conv).primitiveToBool(tt.args)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Conv.primitiveToBool() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -59,7 +59,7 @@ func TestConv_primitiveToString(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := Conv{}.primitiveToString(tt.args.v)
+			got := new(Conv).primitiveToString(tt.args.v)
 			if got != tt.want {
 				t.Errorf("Conv.primitiveToString() = %v, want %v", got, tt.want)
 			}
@@ -107,7 +107,7 @@ func TestConv_primitiveToInt64(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Conv{}.primitiveToInt64(tt.args.v)
+			got, err := new(Conv).primitiveToInt64(tt.args.v)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Conv.primitiveToInt64() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -133,7 +133,7 @@ func TestConv_primitiveToInt(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Conv{}.primitiveToInt(tt.args.v)
+			got, err := new(Conv).primitiveToInt(tt.args.v)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Conv.primitiveToInt() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -162,7 +162,7 @@ func TestConv_primitiveToInt32(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Conv{}.primitiveToInt32(tt.args.v)
+			got, err := new(Conv).primitiveToInt32(tt.args.v)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Conv.primitiveToInt32() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -191,7 +191,7 @@ func TestConv_primitiveToInt16(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Conv{}.primitiveToInt16(tt.args.v)
+			got, err := new(Conv).primitiveToInt16(tt.args.v)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Conv.primitiveToInt16() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -220,7 +220,7 @@ func TestConv_primitiveToInt8(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Conv{}.primitiveToInt8(tt.args.v)
+			got, err := new(Conv).primitiveToInt8(tt.args.v)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Conv.primitiveToInt8() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -269,7 +269,7 @@ func TestConv_primitiveToUint64(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Conv{}.primitiveToUint64(tt.args.v)
+			got, err := new(Conv).primitiveToUint64(tt.args.v)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Conv.primitiveToUint64() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -295,7 +295,7 @@ func TestConv_primitiveToUint(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Conv{}.primitiveToUint(tt.args.v)
+			got, err := new(Conv).primitiveToUint(tt.args.v)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Conv.primitiveToUint() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -323,7 +323,7 @@ func TestConv_primitiveToUint32(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Conv{}.primitiveToUint32(tt.args.v)
+			got, err := new(Conv).primitiveToUint32(tt.args.v)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Conv.primitiveToUint32() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -351,7 +351,7 @@ func TestConv_primitiveToUint16(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Conv{}.primitiveToUint16(tt.args.v)
+			got, err := new(Conv).primitiveToUint16(tt.args.v)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Conv.primitiveToUint16() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -379,7 +379,7 @@ func TestConv_primitiveToUint8(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Conv{}.primitiveToUint8(tt.args.v)
+			got, err := new(Conv).primitiveToUint8(tt.args.v)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Conv.primitiveToUint8() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -424,7 +424,7 @@ func TestConv_primitiveToFloat64(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Conv{}.primitiveToFloat64(tt.args.v)
+			got, err := new(Conv).primitiveToFloat64(tt.args.v)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Conv.primitiveToFloat64() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -452,7 +452,7 @@ func TestConv_primitiveToFloat32(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Conv{}.primitiveToFloat32(tt.args.v)
+			got, err := new(Conv).primitiveToFloat32(tt.args.v)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Conv.primitiveToFloat32() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -495,7 +495,7 @@ func TestConv_primitiveToComplex128(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Conv{}.primitiveToComplex128(tt.args.v)
+			got, err := new(Conv).primitiveToComplex128(tt.args.v)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Conv.primitiveToComplex128() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -521,7 +521,7 @@ func TestConv_primitiveToComplex64(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Conv{}.primitiveToComplex64(tt.args.v)
+			got, err := new(Conv).primitiveToComplex64(tt.args.v)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Conv.primitiveToComplex64() error = %v, wantErr %v", err, tt.wantErr)
 				return

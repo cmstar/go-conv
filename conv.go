@@ -8,12 +8,12 @@ import (
 )
 
 // Conv provides a group of functions to convert between simple types, maps, slices and structs.
-// A new instance with default values is ready for use, it has the default behavior:
-//   Conv{}.ConvertType(...)
+// A pointer of a zero value is ready to use, it has the default behavior:
+//   new(Conv).ConvertType(...)
 //
 // The field Config is used to customize the conversion behavior.
 // e.g., this Conv instance uses a built-in function for Config.NameIndexer and a custom TimeToString function.
-//   c:= Conv{
+//   c:= &Conv{
 //       Config: Config {
 //           IndexName: CaseInsensitiveIndexName,
 //           TimeToString: func(t time.Time) (string, error) { return t.Format(time.RFC1123), nil },
@@ -75,7 +75,7 @@ func DefaultStringToTime(v string) (time.Time, error) {
 	return time.Parse(time.RFC3339Nano, v)
 }
 
-func (c Conv) doSplitString(v string) []string {
+func (c *Conv) doSplitString(v string) []string {
 	var parts []string
 	if c.Config.StringSplitter == nil {
 		parts = append(parts, v)
@@ -85,14 +85,14 @@ func (c Conv) doSplitString(v string) []string {
 	return parts
 }
 
-func (c Conv) doTimeToString(t time.Time) (string, error) {
+func (c *Conv) doTimeToString(t time.Time) (string, error) {
 	if c.Config.TimeToString != nil {
 		return c.Config.TimeToString(t)
 	}
 	return DefaultTimeToString(t)
 }
 
-func (c Conv) doStringToTime(v string) (time.Time, error) {
+func (c *Conv) doStringToTime(v string) (time.Time, error) {
 	if c.Config.StringToTime != nil {
 		return c.Config.StringToTime(v)
 	}
@@ -104,7 +104,7 @@ func (c Conv) doStringToTime(v string) (time.Time, error) {
 //
 // Conv.Config.StringSplitter() is used to split the string.
 //
-func (c Conv) StringToSlice(v string, simpleSliceType reflect.Type) (interface{}, error) {
+func (c *Conv) StringToSlice(v string, simpleSliceType reflect.Type) (interface{}, error) {
 	const fnName = "StringToSlice"
 
 	if simpleSliceType.Kind() != reflect.Slice {
@@ -140,7 +140,7 @@ func (c Conv) StringToSlice(v string, simpleSliceType reflect.Type) (interface{}
 //   time.Time: zero Unix timestamps as false, other values as true.
 //   Other values are not supported, returns false and an error.
 //
-func (c Conv) SimpleToBool(simple interface{}) (bool, error) {
+func (c *Conv) SimpleToBool(simple interface{}) (bool, error) {
 	const fnName = "SimpleToBool"
 
 	if simple == nil {
@@ -170,7 +170,7 @@ func (c Conv) SimpleToBool(simple interface{}) (bool, error) {
 // Conv.Config.StringToTime() is used to format times.
 // Specially, booleans are converted to 0/1, not the default foramt true/false.
 //
-func (c Conv) SimpleToString(v interface{}) (string, error) {
+func (c *Conv) SimpleToString(v interface{}) (string, error) {
 	const fnName = "SimpleToString"
 
 	if v == nil {
@@ -201,7 +201,7 @@ func (c Conv) SimpleToString(v interface{}) (string, error) {
 //   When converting a complex number to a real number, the imaginary part must be zero, the real part will be converted.
 //   When converting to time.Time, the time zone is always time.Local.
 //
-func (c Conv) SimpleToSimple(src interface{}, dstTyp reflect.Type) (interface{}, error) {
+func (c *Conv) SimpleToSimple(src interface{}, dstTyp reflect.Type) (interface{}, error) {
 	const fnName = "SimpleToSimple"
 
 	if src == nil {
@@ -228,7 +228,7 @@ func (c Conv) SimpleToSimple(src interface{}, dstTyp reflect.Type) (interface{},
 	return nil, errForFunction(fnName, "cannot convert from %T to %v", src, dstTyp)
 }
 
-func (c Conv) simpleToLocalTime(src interface{}) (time.Time, error) {
+func (c *Conv) simpleToLocalTime(src interface{}) (time.Time, error) {
 	srcTyp := reflect.TypeOf(src)
 
 	if srcTyp == typTime {
@@ -255,7 +255,7 @@ func (c Conv) simpleToLocalTime(src interface{}) (time.Time, error) {
 	return zeroTime, errCantConvertTo(src, "time.Time")
 }
 
-func (c Conv) simpleToPrimitive(src interface{}, dstKind reflect.Kind) (interface{}, error) {
+func (c *Conv) simpleToPrimitive(src interface{}, dstKind reflect.Kind) (interface{}, error) {
 	srcTyp := reflect.TypeOf(src)
 	if IsPrimitiveType(srcTyp) {
 		return c.primitiveToPrimitive(src, dstKind)
@@ -276,7 +276,7 @@ func (c Conv) simpleToPrimitive(src interface{}, dstKind reflect.Kind) (interfac
 	return nil, fmt.Errorf("cannot convert from %v to %v", srcTyp, dstKind)
 }
 
-func (c Conv) primitiveToPrimitive(v interface{}, dstKind reflect.Kind) (interface{}, error) {
+func (c *Conv) primitiveToPrimitive(v interface{}, dstKind reflect.Kind) (interface{}, error) {
 	switch dstKind {
 	case reflect.Bool:
 		return c.primitiveToBool(v)
@@ -322,7 +322,7 @@ func (c Conv) primitiveToPrimitive(v interface{}, dstKind reflect.Kind) (interfa
 // A nil slice will be converted to a nil slice of the destination type.
 // If the source value is nil interface{}, returns nil and an error.
 //
-func (c Conv) SliceToSlice(src interface{}, dstSliceTyp reflect.Type) (interface{}, error) {
+func (c *Conv) SliceToSlice(src interface{}, dstSliceTyp reflect.Type) (interface{}, error) {
 	const fnName = "SliceToSlice"
 
 	if src == nil {
@@ -366,7 +366,7 @@ func (c Conv) SliceToSlice(src interface{}, dstSliceTyp reflect.Type) (interface
 // Each exported field of the struct is indexed from the map by name using Conv.Config.NameIndexer() , if the name exists,
 // the corresponding value is converted using Conv.ConvertType() .
 //
-func (c Conv) MapToStruct(m map[string]interface{}, dstTyp reflect.Type) (interface{}, error) {
+func (c *Conv) MapToStruct(m map[string]interface{}, dstTyp reflect.Type) (interface{}, error) {
 	const fnName = "MapToStruct"
 
 	if m == nil {
@@ -405,7 +405,7 @@ func (c Conv) MapToStruct(m map[string]interface{}, dstTyp reflect.Type) (interf
 	return dst.Interface(), nil
 }
 
-func (c Conv) doIndexName(m map[string]interface{}, k string) (interface{}, bool) {
+func (c *Conv) doIndexName(m map[string]interface{}, k string) (interface{}, bool) {
 	if c.Config.NameIndexer == nil {
 		v, ok := m[k]
 		return v, ok
@@ -419,7 +419,7 @@ func (c Conv) doIndexName(m map[string]interface{}, k string) (interface{}, bool
 //
 // All keys and values in the map are converted using Conv.ConvertType() .
 //
-func (c Conv) MapToMap(m interface{}, typ reflect.Type) (interface{}, error) {
+func (c *Conv) MapToMap(m interface{}, typ reflect.Type) (interface{}, error) {
 	const fnName = "MapToMap"
 
 	src := reflect.ValueOf(m)
@@ -475,7 +475,7 @@ func (c Conv) MapToMap(m interface{}, typ reflect.Type) (interface{}, error) {
 //    - Non-nil values pointed to are converted with f() .
 // Other types not listed above are not supported and will result in an error.
 //
-func (c Conv) StructToMap(v interface{}) (map[string]interface{}, error) {
+func (c *Conv) StructToMap(v interface{}) (map[string]interface{}, error) {
 	const fnName = "StructToMap"
 
 	if v == nil {
@@ -512,7 +512,7 @@ func (c Conv) StructToMap(v interface{}) (map[string]interface{}, error) {
 	return dst.Interface().(map[string]interface{}), nil
 }
 
-func (c Conv) convertToMapValue(fv reflect.Value) (reflect.Value, error) {
+func (c *Conv) convertToMapValue(fv reflect.Value) (reflect.Value, error) {
 	for fv.Kind() == reflect.Ptr {
 		fv = fv.Elem()
 	}
@@ -608,7 +608,7 @@ func (c Conv) convertToMapValue(fv reflect.Value) (reflect.Value, error) {
 	}
 }
 
-func (c Conv) dertermineSliceTypeForMapValue(srcSliceType reflect.Type) (dstSliceType reflect.Type, ok bool) {
+func (c *Conv) dertermineSliceTypeForMapValue(srcSliceType reflect.Type) (dstSliceType reflect.Type, ok bool) {
 	elemType := srcSliceType.Elem()
 	if IsSimpleType(elemType) {
 		dstSliceType = srcSliceType
@@ -648,7 +648,7 @@ func (c Conv) dertermineSliceTypeForMapValue(srcSliceType reflect.Type) (dstSlic
 //
 // This function can be used to deep-clone a struct.
 //
-func (c Conv) StructToStruct(src interface{}, dstTyp reflect.Type) (interface{}, error) {
+func (c *Conv) StructToStruct(src interface{}, dstTyp reflect.Type) (interface{}, error) {
 	const fnName = "StructToStruct"
 
 	if src == nil {
@@ -724,7 +724,7 @@ func (c Conv) StructToStruct(src interface{}, dstTyp reflect.Type) (interface{},
 // the map has only one key and the key is an empty string, the conversion is performed over the value other than
 // the map itself. This is a special contract for some particular situation, when some code is working on maps only.
 //
-func (c Conv) ConvertType(src interface{}, dstTyp reflect.Type) (interface{}, error) {
+func (c *Conv) ConvertType(src interface{}, dstTyp reflect.Type) (interface{}, error) {
 	const fnName = "ConvertType"
 
 	// Convert nils to nil pointers.
@@ -772,7 +772,7 @@ func (c Conv) ConvertType(src interface{}, dstTyp reflect.Type) (interface{}, er
 // of the pointer will not be set.
 // If dst is not a pointer, the function panics an error.
 //
-func (c Conv) Convert(src interface{}, dstPtr interface{}) error {
+func (c *Conv) Convert(src interface{}, dstPtr interface{}) error {
 	const fnName = "Convert"
 
 	dstValue := reflect.ValueOf(dstPtr)
@@ -804,7 +804,7 @@ func (c Conv) Convert(src interface{}, dstPtr interface{}) error {
 
 // getUnderlyingValue extracts the underlying value if v is a pointer; otherwise returns v.
 // If the pointer points to nil, returns nil.
-func (c Conv) getUnderlyingValue(v interface{}) interface{} {
+func (c *Conv) getUnderlyingValue(v interface{}) interface{} {
 	if v == nil {
 		return nil
 	}
@@ -822,7 +822,7 @@ func (c Conv) getUnderlyingValue(v interface{}) interface{} {
 	return vo.Interface()
 }
 
-func (c Conv) convertToNonPtr(src interface{}, dstTyp reflect.Type) (interface{}, error) {
+func (c *Conv) convertToNonPtr(src interface{}, dstTyp reflect.Type) (interface{}, error) {
 	src = c.getUnderlyingValue(src)
 
 	dstKind := dstTyp.Kind()
@@ -893,7 +893,7 @@ func (c Conv) convertToNonPtr(src interface{}, dstTyp reflect.Type) (interface{}
 // Such map is a special contract, it's used when converting a map to a simple type.
 // e.g., map[string]int{"": 123} can be converted to 123 .
 //
-func (c Conv) tryFlattenEmptyKeyMap(v interface{}) interface{} {
+func (c *Conv) tryFlattenEmptyKeyMap(v interface{}) interface{} {
 	m, ok := v.(map[string]interface{})
 	if !ok || len(m) != 1 {
 		return nil
