@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestConv_primitiveToBool(t *testing.T) {
+func TestConv_PrimitiveToBool(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    interface{}
@@ -40,7 +40,7 @@ func TestConv_primitiveToBool(t *testing.T) {
 	}
 }
 
-func TestConv_primitiveToString(t *testing.T) {
+func TestConv_PrimitiveToString(t *testing.T) {
 	type args struct {
 		v interface{}
 	}
@@ -67,7 +67,7 @@ func TestConv_primitiveToString(t *testing.T) {
 	}
 }
 
-func TestConv_primitiveToInt64(t *testing.T) {
+func TestConv_PrimitiveToInt64(t *testing.T) {
 	type args struct {
 		v interface{}
 	}
@@ -119,7 +119,7 @@ func TestConv_primitiveToInt64(t *testing.T) {
 	}
 }
 
-func TestConv_primitiveToInt(t *testing.T) {
+func TestConv_PrimitiveToInt(t *testing.T) {
 	type args struct {
 		v interface{}
 	}
@@ -145,7 +145,7 @@ func TestConv_primitiveToInt(t *testing.T) {
 	}
 }
 
-func TestConv_primitiveToInt32(t *testing.T) {
+func TestConv_PrimitiveToInt32(t *testing.T) {
 	type args struct {
 		v interface{}
 	}
@@ -174,7 +174,7 @@ func TestConv_primitiveToInt32(t *testing.T) {
 	}
 }
 
-func TestConv_primitiveToInt16(t *testing.T) {
+func TestConv_PrimitiveToInt16(t *testing.T) {
 	type args struct {
 		v interface{}
 	}
@@ -203,7 +203,7 @@ func TestConv_primitiveToInt16(t *testing.T) {
 	}
 }
 
-func TestConv_primitiveToInt8(t *testing.T) {
+func TestConv_PrimitiveToInt8(t *testing.T) {
 	type args struct {
 		v interface{}
 	}
@@ -232,7 +232,7 @@ func TestConv_primitiveToInt8(t *testing.T) {
 	}
 }
 
-func TestConv_primitiveToUint64(t *testing.T) {
+func TestConv_PrimitiveToUint64(t *testing.T) {
 	type args struct {
 		v interface{}
 	}
@@ -281,7 +281,7 @@ func TestConv_primitiveToUint64(t *testing.T) {
 	}
 }
 
-func TestConv_primitiveToUint(t *testing.T) {
+func TestConv_PrimitiveToUint(t *testing.T) {
 	type args struct {
 		v interface{}
 	}
@@ -307,7 +307,7 @@ func TestConv_primitiveToUint(t *testing.T) {
 	}
 }
 
-func TestConv_primitiveToUint32(t *testing.T) {
+func TestConv_PrimitiveToUint32(t *testing.T) {
 	type args struct {
 		v interface{}
 	}
@@ -335,7 +335,7 @@ func TestConv_primitiveToUint32(t *testing.T) {
 	}
 }
 
-func TestConv_primitiveToUint16(t *testing.T) {
+func TestConv_PrimitiveToUint16(t *testing.T) {
 	type args struct {
 		v interface{}
 	}
@@ -363,7 +363,7 @@ func TestConv_primitiveToUint16(t *testing.T) {
 	}
 }
 
-func TestConv_primitiveToUint8(t *testing.T) {
+func TestConv_PrimitiveToUint8(t *testing.T) {
 	type args struct {
 		v interface{}
 	}
@@ -391,7 +391,7 @@ func TestConv_primitiveToUint8(t *testing.T) {
 	}
 }
 
-func TestConv_primitiveToFloat64(t *testing.T) {
+func TestConv_PrimitiveToFloat64(t *testing.T) {
 	type args struct {
 		v interface{}
 	}
@@ -436,7 +436,7 @@ func TestConv_primitiveToFloat64(t *testing.T) {
 	}
 }
 
-func TestConv_primitiveToFloat32(t *testing.T) {
+func TestConv_PrimitiveToFloat32(t *testing.T) {
 	type args struct {
 		v interface{}
 	}
@@ -464,7 +464,7 @@ func TestConv_primitiveToFloat32(t *testing.T) {
 	}
 }
 
-func TestConv_primitiveToComplex128(t *testing.T) {
+func TestConv_PrimitiveToComplex128(t *testing.T) {
 	type args struct {
 		v interface{}
 	}
@@ -507,7 +507,7 @@ func TestConv_primitiveToComplex128(t *testing.T) {
 	}
 }
 
-func TestConv_primitiveToComplex64(t *testing.T) {
+func TestConv_PrimitiveToComplex64(t *testing.T) {
 	type args struct {
 		v interface{}
 	}

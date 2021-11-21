@@ -940,7 +940,7 @@ func TestConv_StructToStruct(t *testing.T) {
 	}
 }
 
-func TestConv_ConvertType_ConvertPointers(t *testing.T) {
+func TestConv_ConvertType_convertPointers(t *testing.T) {
 	i := 1
 	pi := &i
 	ppi := &pi
@@ -1026,7 +1026,7 @@ func TestConv_ConvertType_ConvertPointers(t *testing.T) {
 	}
 }
 
-func TestConv_ConvertType_MapToStructWithPointers(t *testing.T) {
+func TestConv_ConvertType_mapToStructWithPointers(t *testing.T) {
 	fieldS1 := S1{S: "23", I: 33, F: 44}
 	fieldOut := "3.14"
 	p2 := P2{S1: &fieldS1, Out: &fieldOut}
@@ -1077,7 +1077,7 @@ func TestConv_ConvertType_MapToStructWithPointers(t *testing.T) {
 	}
 }
 
-func TestConv_ConvertType_SliceToSlice(t *testing.T) {
+func TestConv_ConvertType_sliceToSlice(t *testing.T) {
 	type s struct {
 		S     *string
 		I     **int64
@@ -1140,7 +1140,7 @@ func TestConv_ConvertType_SliceToSlice(t *testing.T) {
 	check(1, "2", 0, 4)
 }
 
-func TestConv_ConvertType_FlatternMap(t *testing.T) {
+func TestConv_ConvertType_flatternMap(t *testing.T) {
 	i := 1999
 	var pf *float32
 
@@ -1281,7 +1281,7 @@ func TestConv_ConvertType(t *testing.T) {
 	}
 }
 
-func TestConv_Convert_PanicOnNil(t *testing.T) {
+func TestConv_Convert_panicOnNil(t *testing.T) {
 	defer func() {
 		var err interface{}
 		if err = recover(); err == nil {
@@ -1297,7 +1297,7 @@ func TestConv_Convert_PanicOnNil(t *testing.T) {
 	new(Conv).Convert(nil, 0)
 }
 
-func TestConv_Convert_PanicOnUninitialized(t *testing.T) {
+func TestConv_Convert_panicOnUninitialized(t *testing.T) {
 	defer func() {
 		var err interface{}
 		if err = recover(); err == nil {
@@ -1314,7 +1314,7 @@ func TestConv_Convert_PanicOnUninitialized(t *testing.T) {
 	new(Conv).Convert("", p)
 }
 
-func TestConv_Convert_Ptr(t *testing.T) {
+func TestConv_Convert_ptr(t *testing.T) {
 	i := 1
 	pi := &i
 	ppi := &pi
@@ -1341,7 +1341,7 @@ func TestConv_Convert_Ptr(t *testing.T) {
 	})
 }
 
-func TestConv_tryFlattenEmptyKeyMap(t *testing.T) {
+func TestConv_TryFlattenEmptyKeyMap(t *testing.T) {
 	c := &Conv{}
 
 	type args struct {

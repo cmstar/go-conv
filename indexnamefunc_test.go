@@ -90,7 +90,7 @@ func TestCamelSnakeCaseIndexName(t *testing.T) {
 	}
 }
 
-func Test_camelSnakeCaseCompare(t *testing.T) {
+func TestCamelSnakeCaseCompare(t *testing.T) {
 	tests := []struct {
 		sx   string
 		sy   string
@@ -144,7 +144,7 @@ func Test_camelSnakeCaseCompare(t *testing.T) {
 	}
 }
 
-func Test_camelSnakeNameIter(t *testing.T) {
+func TestCamelSnakeNameIter(t *testing.T) {
 	checkNext := func(t *testing.T, iter *camelSnakeNameIter, wantIdx int, wantCur rune, isWordStart bool) {
 		iter.next()
 
