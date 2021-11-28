@@ -12,13 +12,15 @@ import (
 //   new(Conv).ConvertType(...)
 //
 // The field Config is used to customize the conversion behavior.
-// e.g., this Conv instance uses a built-in function for Config.NameIndexer and a custom TimeToString function.
+// e.g., this Conv instance uses a built-in FieldMatcherCreator and a custom TimeToString function.
 //   c:= &Conv{
 //       Config: Config {
-//           IndexName: CaseInsensitiveIndexName,
+//           FieldMatcherCreator: CaseInsensitiveFieldMatcherCreator(),
 //           TimeToString: func(t time.Time) (string, error) { return t.Format(time.RFC1123), nil },
 //       },
 //   }
+//
+// All functions are thread-safe and can be used concurrently.
 //
 type Conv struct {
 	// Config is used to customize the conversion behavior.
@@ -33,24 +35,19 @@ type Config struct {
 	// If this field is nil, the value will not be splitted.
 	StringSplitter func(v string) []string
 
-	// NameIndexer is the function used to match names when converting from map to struct or from struct to struct.
+	// FieldMatcherCreator is used to get FieldMatcher instances when converting from map to struct or
+	// from struct to struct.
 	//
-	// If the given name can match, the function returns the value from the source map with @ok=true;
-	// otherwise returns (nil, false) .
-	// If it returns OK, the value from the source map will be converted into the destination struct
-	// using Conv.ConvertType() .
+	// When converting a map to a struct, a FieldMatcherCreator.GetMatcher() returns a FieldMatcher instance for the
+	// target struct, then FieldMatcher.MatchField() is applied to each key of the map.
+	// The matched field will be set by the converted value of the key, the value is converted with Conv.ConvertType().
 	//
-	// When converting a map to a struct, each field name of the struct will be indexed using this function.
-	// When converting a struct to another, field names and values from the source struct will be put into a map,
-	// then each field name of the destination struct will be indexed with the map.
+	// When converting a struct to another, FieldMatcher.MatchField() is applied to each field name from the source struct.
 	//
-	// If this function is nil, the Go built-in indexer for maps will be used.
-	// The build-in indexer is like:
-	//   v, ok := m[name]
+	// If FieldMatcherCreator is nil, SimpleMatcherCreator() will be used. There are some predefined implemantations,
+	// such as CaseInsensitiveFieldMatcherCreator(), CamelSnakeCaseFieldMatcherCreator().
 	//
-	// There are some predefined indexer functions, such as CaseInsensitiveIndexName, CamelSnakeCaseIndexName.
-	//
-	NameIndexer IndexNameFunc
+	FieldMatcherCreator FieldMatcherCreator
 
 	// TimeToString formats the given time.
 	// It is called internally by Convert, ConvertType or other functions.
@@ -363,8 +360,7 @@ func (c *Conv) SliceToSlice(src interface{}, dstSliceTyp reflect.Type) (interfac
 
 // MapToStruct converts a map[string]interface{} to a struct.
 //
-// Each exported field of the struct is indexed from the map by name using Conv.Config.NameIndexer() , if the name exists,
-// the corresponding value is converted using Conv.ConvertType() .
+// Each exported field of the struct is indexed using Conv.Config.FieldMatcherCreator().
 //
 func (c *Conv) MapToStruct(m map[string]interface{}, dstTyp reflect.Type) (interface{}, error) {
 	const fnName = "MapToStruct"
@@ -379,39 +375,37 @@ func (c *Conv) MapToStruct(m map[string]interface{}, dstTyp reflect.Type) (inter
 	}
 
 	dst := reflect.New(dstTyp).Elem()
+	ctor := c.FieldMatcherCreator()
+	mather := ctor.GetMatcher(dstTyp)
 
-	for i := 0; i < dstTyp.NumField(); i++ {
-		f := dstTyp.Field(i)
-
-		v, ok := c.doIndexName(m, f.Name)
+	for k, vm := range m {
+		field, ok := mather.MatchField(k)
 		if !ok {
 			continue
 		}
 
-		// Ignore all unexported fields, they can't be set.
-		dstF := dst.Field(i)
-		if !dstF.CanSet() {
+		fieldValue := dst.FieldByIndex(field.Index)
+		if !fieldValue.CanSet() {
 			continue
 		}
 
-		fv, err := c.ConvertType(v, f.Type)
+		vf, err := c.ConvertType(vm, field.Type)
 		if err != nil {
-			return nil, errForFunction(fnName, "error on converting field '%v': %v", f.Name, err.Error())
+			return nil, errForFunction(fnName, "error on converting field '%v': %v", field.Name, err.Error())
 		}
 
-		dstF.Set(reflect.ValueOf(fv))
+		fieldValue.Set(reflect.ValueOf(vf))
 	}
 
 	return dst.Interface(), nil
 }
 
-func (c *Conv) doIndexName(m map[string]interface{}, k string) (interface{}, bool) {
-	if c.Config.NameIndexer == nil {
-		v, ok := m[k]
-		return v, ok
+func (c *Conv) FieldMatcherCreator() FieldMatcherCreator {
+	g := c.Config.FieldMatcherCreator
+	if g == nil {
+		g = SimpleMatcherCreator{}
 	}
-
-	return c.Config.NameIndexer(m, k)
+	return g
 }
 
 // MapToMap converts a map to another map.
@@ -642,9 +636,8 @@ func (c *Conv) dertermineSliceTypeForMapValue(srcSliceType reflect.Type) (dstSli
 // StructToStruct converts a struct to another.
 // If the given value is nil, returns nil and an error.
 //
-// When converting, all fields of the source struct is to be stored in a map[string]interface{} ,
-// then each field of the destination struct is indexed from the map by name using Conv.Config.NameIndexer() ,
-// if the name exists, the value is converted using Conv.ConvertType() .
+// When converting, each field of the destination struct is indexed using Conv.Config.FieldMatcherCreator.
+// The field values are converted using Conv.ConvertType() .
 //
 // This function can be used to deep-clone a struct.
 //
@@ -665,8 +658,11 @@ func (c *Conv) StructToStruct(src interface{}, dstTyp reflect.Type) (interface{}
 		return nil, errForFunction(fnName, "the given value must be a struct, got %v", srcTyp)
 	}
 
-	m := make(map[string]interface{})
+	ctor := c.FieldMatcherCreator()
+	mather := ctor.GetMatcher(dstTyp)
 	vSrc := reflect.ValueOf(src)
+	vDst := reflect.New(dstTyp).Elem()
+
 	for i := 0; i < vSrc.NumField(); i++ {
 		f := vSrc.Field(i)
 		if !f.CanInterface() {
@@ -674,25 +670,19 @@ func (c *Conv) StructToStruct(src interface{}, dstTyp reflect.Type) (interface{}
 		}
 
 		fName := srcTyp.Field(i).Name
-		m[fName] = f.Interface()
-	}
-
-	vDst := reflect.New(dstTyp).Elem()
-	for i := 0; i < vDst.NumField(); i++ {
-		fType := dstTyp.Field(i)
-		v, ok := c.doIndexName(m, fType.Name)
+		field, ok := mather.MatchField(fName)
 		if !ok {
 			continue
 		}
 
-		vField := vDst.Field(i)
+		vField := vDst.FieldByIndex(field.Index)
 		if !vField.CanSet() {
 			continue
 		}
 
-		dstValue, err := c.ConvertType(v, fType.Type)
+		dstValue, err := c.ConvertType(f.Interface(), vField.Type())
 		if err != nil {
-			return nil, errForFunction(fnName, "error on converting field %v: %v", fType.Name, err.Error())
+			return nil, errForFunction(fnName, "error on converting field %v: %v", field.Name, err.Error())
 		}
 
 		vField.Set(reflect.ValueOf(dstValue))

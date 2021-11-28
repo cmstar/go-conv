@@ -356,7 +356,11 @@ func TestConv_SliceToSlice(t *testing.T) {
 func TestConv_MapToStruct(t *testing.T) {
 	caseInsensitiveConv := &Conv{
 		Config: Config{
-			NameIndexer: CaseInsensitiveIndexName,
+			FieldMatcherCreator: SimpleMatcherCreator{
+				Conf: SimpleMatcherConfig{
+					CaseInsensitive: true,
+				},
+			},
 		},
 	}
 
@@ -827,7 +831,11 @@ func TestConv_StructToMap(t *testing.T) {
 func TestConv_StructToStruct(t *testing.T) {
 	caseInsensitiveConv := &Conv{
 		Config: Config{
-			NameIndexer: CaseInsensitiveIndexName,
+			FieldMatcherCreator: SimpleMatcherCreator{
+				Conf: SimpleMatcherConfig{
+					CaseInsensitive: true,
+				},
+			},
 		},
 	}
 
@@ -905,7 +913,7 @@ func TestConv_StructToStruct(t *testing.T) {
 
 		// Test custom IndexName .
 		{
-			"custom-name-indexer",
+			"custom-name",
 			true,
 			args{S2{Out: "-1999", Sl: []byte{3, 5, 77}, inner: 44}, reflect.TypeOf(ss2{})},
 			ss2{OUt: float64(-1999), SL: []int{3, 5, 77}},
