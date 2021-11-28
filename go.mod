@@ -1,3 +1,3 @@
-module github.com/cmstar/conv
+module github.com/cmstar/go-conv
 
 go 1.13
