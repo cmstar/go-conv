@@ -42,7 +42,7 @@ type P2 struct {
 
 func TestConv_StringToSlice(t *testing.T) {
 	customConv := &Conv{
-		Config: Config{
+		Conf: Config{
 			StringSplitter: func(v string) []string { return strings.Split(v, "~") },
 		},
 	}
@@ -148,7 +148,7 @@ func TestConv_SimpleToBool(t *testing.T) {
 
 func TestConv_SimpleToString(t *testing.T) {
 	customTimeConv := &Conv{
-		Config: Config{
+		Conf: Config{
 			TimeToString: func(t time.Time) (string, error) {
 				if t == time.Unix(0, 0) {
 					return "", errors.New("we make a custom error for zero time")
@@ -210,7 +210,7 @@ func TestConv_SimpleToSimple(t *testing.T) {
 	spDate := time.Date(2021, 6, 3, 13, 21, 22, 54321, time.UTC).Local()
 	spDateWithoutNano := time.Unix(spDate.Unix(), 0).Local()
 	customTimeConv := &Conv{
-		Config: Config{
+		Conf: Config{
 			StringToTime: func(v string) (time.Time, error) { return spDate, nil },
 			TimeToString: func(t time.Time) (string, error) {
 				if t == time.Unix(0, 0) {
@@ -355,7 +355,7 @@ func TestConv_SliceToSlice(t *testing.T) {
 
 func TestConv_MapToStruct(t *testing.T) {
 	caseInsensitiveConv := &Conv{
-		Config: Config{
+		Conf: Config{
 			FieldMatcherCreator: SimpleMatcherCreator{
 				Conf: SimpleMatcherConfig{
 					CaseInsensitive: true,
@@ -830,7 +830,7 @@ func TestConv_StructToMap(t *testing.T) {
 
 func TestConv_StructToStruct(t *testing.T) {
 	caseInsensitiveConv := &Conv{
-		Config: Config{
+		Conf: Config{
 			FieldMatcherCreator: SimpleMatcherCreator{
 				Conf: SimpleMatcherConfig{
 					CaseInsensitive: true,

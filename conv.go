@@ -23,8 +23,8 @@ import (
 // All functions are thread-safe and can be used concurrently.
 //
 type Conv struct {
-	// Config is used to customize the conversion behavior.
-	Config Config
+	// Conf is used to customize the conversion behavior.
+	Conf Config
 }
 
 // Config is used to customize the conversion behavior of Conv .
@@ -74,24 +74,24 @@ func DefaultStringToTime(v string) (time.Time, error) {
 
 func (c *Conv) doSplitString(v string) []string {
 	var parts []string
-	if c.Config.StringSplitter == nil {
+	if c.Conf.StringSplitter == nil {
 		parts = append(parts, v)
 	} else {
-		parts = c.Config.StringSplitter(v)
+		parts = c.Conf.StringSplitter(v)
 	}
 	return parts
 }
 
 func (c *Conv) doTimeToString(t time.Time) (string, error) {
-	if c.Config.TimeToString != nil {
-		return c.Config.TimeToString(t)
+	if c.Conf.TimeToString != nil {
+		return c.Conf.TimeToString(t)
 	}
 	return DefaultTimeToString(t)
 }
 
 func (c *Conv) doStringToTime(v string) (time.Time, error) {
-	if c.Config.StringToTime != nil {
-		return c.Config.StringToTime(v)
+	if c.Conf.StringToTime != nil {
+		return c.Conf.StringToTime(v)
 	}
 	return DefaultStringToTime(v)
 }
@@ -401,7 +401,7 @@ func (c *Conv) MapToStruct(m map[string]interface{}, dstTyp reflect.Type) (inter
 }
 
 func (c *Conv) FieldMatcherCreator() FieldMatcherCreator {
-	g := c.Config.FieldMatcherCreator
+	g := c.Conf.FieldMatcherCreator
 	if g == nil {
 		g = SimpleMatcherCreator{}
 	}
