@@ -19,7 +19,7 @@ type DemoUser struct {
 func Example() {
 
 	// There is a group of shortcut functions for converting from/to simple types.
-	// All convertion functions returns the converted value and an error.
+	// All conversion functions returns the converted value and an error.
 	fmt.Println(conv.Int("123"))         // -> 123
 	fmt.Println(conv.String(3.14))       // -> "3.14"
 	fmt.Println(conv.Float64("invalid")) // -> get an error
@@ -32,7 +32,7 @@ func Example() {
 	fmt.Println(conv.Bool(float64(0.1))) // -> true
 	fmt.Println(conv.Bool(-1))           // -> true
 
-	// strconv.ParseBool() is used for string-to-bool convertion.
+	// strconv.ParseBool() is used for string-to-bool conversion.
 	fmt.Println(conv.Bool("true"))  // -> true
 	fmt.Println(conv.Bool("false")) // -> false
 
@@ -42,7 +42,7 @@ func Example() {
 	// By default time.Time is converted to string with the RFC3339 format.
 	fmt.Println(conv.String(t.UTC())) // -> 1970-01-01T01:00:00Z
 
-	// ConvertType() is the core function in the package. In fact all convertion can be done via
+	// ConvertType() is the core function in the package. In fact all conversion can be done via
 	// this function. For complex types, there is no shortcut, we can use ConvertType() directly.
 	// It receives the source value and the destination type.
 
@@ -94,7 +94,7 @@ func Example_theConvInstance() {
 	// You can use it directly. A zero value has the default behavior.
 	c := new(conv.Conv)
 
-	// It has a field named Conf which is used to customize the convertion.
+	// It has a field named Conf which is used to customize the conversion.
 	// By default, we get an error when converting to a slice from a string that is a group of
 	// elements separated by some characters.
 	fmt.Println(c.ConvertType("1,2,3", reflect.TypeOf([]int{}))) // -> error
