@@ -356,7 +356,7 @@ func TestConv_SliceToSlice(t *testing.T) {
 func TestConv_MapToStruct(t *testing.T) {
 	caseInsensitiveConv := &Conv{
 		Conf: Config{
-			FieldMatcherCreator: SimpleMatcherCreator{
+			FieldMatcherCreator: &SimpleMatcherCreator{
 				Conf: SimpleMatcherConfig{
 					CaseInsensitive: true,
 				},
@@ -831,7 +831,7 @@ func TestConv_StructToMap(t *testing.T) {
 func TestConv_StructToStruct(t *testing.T) {
 	caseInsensitiveConv := &Conv{
 		Conf: Config{
-			FieldMatcherCreator: SimpleMatcherCreator{
+			FieldMatcherCreator: &SimpleMatcherCreator{
 				Conf: SimpleMatcherConfig{
 					CaseInsensitive: true,
 				},

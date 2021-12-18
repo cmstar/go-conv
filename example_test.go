@@ -108,7 +108,7 @@ func Example_theConvInstance() {
 	// a map or another struct.
 	// Here we demonstrate how to make snake-case names match the field names automatically,
 	// using the build-in FieldMatcherCreator named SimpleMatcherCreator.
-	c.Conf.FieldMatcherCreator = conv.SimpleMatcherCreator{
+	c.Conf.FieldMatcherCreator = &conv.SimpleMatcherCreator{
 		Conf: conv.SimpleMatcherConfig{
 			CamelSnakeCase: true,
 		},

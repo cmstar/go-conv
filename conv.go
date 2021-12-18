@@ -403,7 +403,7 @@ func (c *Conv) MapToStruct(m map[string]interface{}, dstTyp reflect.Type) (inter
 func (c *Conv) fieldMatcherCreator() FieldMatcherCreator {
 	g := c.Conf.FieldMatcherCreator
 	if g == nil {
-		g = SimpleMatcherCreator{}
+		g = new(SimpleMatcherCreator)
 	}
 	return g
 }

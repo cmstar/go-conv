@@ -82,12 +82,12 @@ type SimpleMatcherCreator struct {
 }
 
 // GetMatcher implements FieldMatcherCreator.GetMatcher().
-func (c SimpleMatcherCreator) GetMatcher(typ reflect.Type) FieldMatcher {
+func (c *SimpleMatcherCreator) GetMatcher(typ reflect.Type) FieldMatcher {
 	v, _ := c.m.LoadOrStore(typ, &simpleMatcher{
 		conf: c.Conf,
 		typ:  typ,
 	})
-	return v.(FieldMatcher)
+	return v.(*simpleMatcher)
 }
 
 // simpleMatcher is the FieldMatcher returned by SimpleMatcherCreator.
