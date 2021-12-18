@@ -81,6 +81,7 @@ type SimpleMatcherCreator struct {
 	m    sync.Map
 }
 
+// GetMatcher implements FieldMatcherCreator.GetMatcher().
 func (c SimpleMatcherCreator) GetMatcher(typ reflect.Type) FieldMatcher {
 	v, _ := c.m.LoadOrStore(typ, &simpleMatcher{
 		conf: c.Conf,

@@ -66,7 +66,7 @@ func Int32(v interface{}) (int32, error) {
 	return res.(int32), nil
 }
 
-// int16 converts the given value to the corresponding value of int16.
+// Int16 converts the given value to the corresponding value of int16.
 // The value must be a simple type, for which IsSimpleType() returns true.
 // It is equivalent to new(Conv).Convert(v, reflect.TypeOf(int16(0))) .
 func Int16(v interface{}) (int16, error) {

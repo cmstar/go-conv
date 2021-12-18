@@ -44,9 +44,8 @@ func (c *Conv) primitiveToString(v interface{}) string {
 		// by strconv.ParseBool() , and can be converted to other number types.
 		if vv {
 			return "1"
-		} else {
-			return "0"
 		}
+		return "0"
 
 	case string:
 		return vv
@@ -79,9 +78,8 @@ func (c *Conv) doPrimitiveToInt64(v interface{}, dstType string) (int64, error) 
 	case kind == reflect.Bool:
 		if val.Bool() {
 			return 1, nil
-		} else {
-			return 0, nil
 		}
+		return 0, nil
 
 	case isKindInt(kind):
 		return val.Int(), nil
@@ -190,9 +188,8 @@ func (c *Conv) doPrimitiveToUint64(v interface{}, dstType string) (uint64, error
 	case kind == reflect.Bool:
 		if val.Bool() {
 			return 1, nil
-		} else {
-			return 0, nil
 		}
+		return 0, nil
 
 	case isKindInt(kind):
 		num := val.Int()
@@ -301,9 +298,8 @@ func (c *Conv) doPrimitiveToFloat64(v interface{}, dstType string) (float64, err
 	case kind == reflect.Bool:
 		if val.Bool() {
 			return 1, nil
-		} else {
-			return 0, nil
 		}
+		return 0, nil
 
 	case isKindInt(kind):
 		return float64(val.Int()), nil
@@ -354,9 +350,8 @@ func (c *Conv) doPrimitiveToComplex128(v interface{}, dstType string) (complex12
 	case kind == reflect.Bool:
 		if val.Bool() {
 			return 1, nil
-		} else {
-			return 0, nil
 		}
+		return 0, nil
 
 	case isKindInt(kind):
 		return complex(float64(val.Int()), 0), nil

@@ -375,7 +375,7 @@ func (c *Conv) MapToStruct(m map[string]interface{}, dstTyp reflect.Type) (inter
 	}
 
 	dst := reflect.New(dstTyp).Elem()
-	ctor := c.FieldMatcherCreator()
+	ctor := c.fieldMatcherCreator()
 	mather := ctor.GetMatcher(dstTyp)
 
 	for k, vm := range m {
@@ -400,7 +400,7 @@ func (c *Conv) MapToStruct(m map[string]interface{}, dstTyp reflect.Type) (inter
 	return dst.Interface(), nil
 }
 
-func (c *Conv) FieldMatcherCreator() FieldMatcherCreator {
+func (c *Conv) fieldMatcherCreator() FieldMatcherCreator {
 	g := c.Conf.FieldMatcherCreator
 	if g == nil {
 		g = SimpleMatcherCreator{}
@@ -658,7 +658,7 @@ func (c *Conv) StructToStruct(src interface{}, dstTyp reflect.Type) (interface{}
 		return nil, errForFunction(fnName, "the given value must be a struct, got %v", srcTyp)
 	}
 
-	ctor := c.FieldMatcherCreator()
+	ctor := c.fieldMatcherCreator()
 	mather := ctor.GetMatcher(dstTyp)
 	vSrc := reflect.ValueOf(src)
 	vDst := reflect.New(dstTyp).Elem()
