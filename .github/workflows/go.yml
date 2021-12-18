@@ -1,0 +1,39 @@
+name: Go
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+
+  build:
+    name: Test
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+        go: ['1.13.x', '1.17.x']
+
+    steps:
+
+      - name: Check out
+        uses: actions/checkout@v2
+
+      - name: Set up Go ${{ matrix.go }}
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test -race -coverprofile=coverage.txt -covermode=atomic ./...
+
+      - name: Upload Coverage Report
+        uses: codecov/codecov-action@v1
+        with:
+          file: ./coverage.txt
