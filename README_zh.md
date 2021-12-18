@@ -1,6 +1,8 @@
 # conv - Go 的类型转换库
 
 [![GoDoc](https://godoc.org/github.com/cmstar/go-conv?status.svg)](https://pkg.go.dev/github.com/cmstar/go-conv)
+[![Go](https://github.com/cmstar/go-conv/workflows/Go/badge.svg)](https://github.com/cmstar/go-conv/actions?query=workflow%3AGo)
+[![codecov](https://codecov.io/gh/cmstar/go-conv/branch/master/graph/badge.svg)](https://codecov.io/gh/cmstar/go-conv)
 [![License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](https://opensource.org/licenses/MIT)
 
 功能:
