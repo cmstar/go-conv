@@ -1148,7 +1148,7 @@ func TestConv_ConvertType_sliceToSlice(t *testing.T) {
 	check(1, "2", 0, 4)
 }
 
-func TestConv_ConvertType_flatternMap(t *testing.T) {
+func TestConv_ConvertType_flatMap(t *testing.T) {
 	i := 1999
 	var pf *float32
 

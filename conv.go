@@ -32,7 +32,7 @@ type Config struct {
 	// StringSplitter is the function used to split the string into elements of the slice when converting a string to a slice.
 	// It is called internally by Convert, ConvertType or other functions.
 	// Set this field if customization of the conversion is needed.
-	// If this field is nil, the value will not be splitted.
+	// If this field is nil, the value will not be split.
 	StringSplitter func(v string) []string
 
 	// FieldMatcherCreator is used to get FieldMatcher instances when converting from map to struct or
@@ -44,20 +44,20 @@ type Config struct {
 	//
 	// When converting a struct to another, FieldMatcher.MatchField() is applied to each field name from the source struct.
 	//
-	// If FieldMatcherCreator is nil, SimpleMatcherCreator() will be used. There are some predefined implemantations,
+	// If FieldMatcherCreator is nil, SimpleMatcherCreator() will be used. There are some predefined implementations,
 	// such as CaseInsensitiveFieldMatcherCreator(), CamelSnakeCaseFieldMatcherCreator().
 	//
 	FieldMatcherCreator FieldMatcherCreator
 
 	// TimeToString formats the given time.
 	// It is called internally by Convert, ConvertType or other functions.
-	// Set this field if need to customize the procedure.
+	// Set this field if it is needed to customize the procedure.
 	// If this field is nil, the function DefaultTimeToString() will be used.
 	TimeToString func(t time.Time) (string, error)
 
-	// StringToTime parses the given string and returns the time it represends.
+	// StringToTime parses the given string and returns the time it represents.
 	// It is called internally by Convert, ConvertType or other functions.
-	// Set this field if need to customize the procedure.
+	// Set this field if it is needed to customize the procedure.
 	// If this field is nil, the function DefaultStringToTime() will be used.
 	StringToTime func(v string) (time.Time, error)
 }
@@ -165,7 +165,7 @@ func (c *Conv) SimpleToBool(simple interface{}) (bool, error) {
 // The value must be a simple type, for which IsSimpleType() returns true.
 //
 // Conv.Config.StringToTime() is used to format times.
-// Specially, booleans are converted to 0/1, not the default foramt true/false.
+// Specially, booleans are converted to 0/1, not the default format true/false.
 //
 func (c *Conv) SimpleToString(v interface{}) (string, error) {
 	const fnName = "SimpleToString"
@@ -528,7 +528,7 @@ func (c *Conv) convertToMapValue(fv reflect.Value) (reflect.Value, error) {
 		switch {
 		case fv.IsNil():
 			ft := fv.Type()
-			sliceType, ok := c.dertermineSliceTypeForMapValue(ft)
+			sliceType, ok := c.determineSliceTypeForMapValue(ft)
 			if !ok {
 				return reflect.Value{}, fmt.Errorf("cannot convert %v", fv.Type())
 			}
@@ -536,7 +536,7 @@ func (c *Conv) convertToMapValue(fv reflect.Value) (reflect.Value, error) {
 
 		case fv.Len() == 0:
 			ft := fv.Type()
-			sliceType, ok := c.dertermineSliceTypeForMapValue(ft)
+			sliceType, ok := c.determineSliceTypeForMapValue(ft)
 			if !ok {
 				return reflect.Value{}, fmt.Errorf("cannot convert %v", fv.Type())
 			}
@@ -602,7 +602,7 @@ func (c *Conv) convertToMapValue(fv reflect.Value) (reflect.Value, error) {
 	}
 }
 
-func (c *Conv) dertermineSliceTypeForMapValue(srcSliceType reflect.Type) (dstSliceType reflect.Type, ok bool) {
+func (c *Conv) determineSliceTypeForMapValue(srcSliceType reflect.Type) (dstSliceType reflect.Type, ok bool) {
 	elemType := srcSliceType.Elem()
 	if IsSimpleType(elemType) {
 		dstSliceType = srcSliceType
@@ -618,7 +618,7 @@ func (c *Conv) dertermineSliceTypeForMapValue(srcSliceType reflect.Type) (dstSli
 		return
 
 	case reflect.Slice:
-		innerSliceType, innerOK := c.dertermineSliceTypeForMapValue(elemType)
+		innerSliceType, innerOK := c.determineSliceTypeForMapValue(elemType)
 		if !innerOK {
 			return
 		}
@@ -693,7 +693,7 @@ func (c *Conv) StructToStruct(src interface{}, dstTyp reflect.Type) (interface{}
 
 // ConvertType is the core function of Conv . It converts the given value to the destination type.
 //
-// Currently these conversions are supported:
+// Currently, these conversions are supported:
 //   simple                 -> simple                  use Conv.SimpleToSimple()
 //   string                 -> []simple                use Conv.StringToSlice()
 //   map[string]interface{} -> struct                  use Conv.MapToStruct()

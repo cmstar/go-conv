@@ -12,9 +12,9 @@ Features:
 - Supports conversion between numbers, string, time.
 - Supports converting from `slice` to `slice`.
 - Supports converting between `struct` and `map[string]interface{}`.
-- Overflow checking when converting intergers.
+- Overflow checking when converting integers.
 - Match field names case-insensitively, or in the camel-case manner.
-- Case-insensitive JSON unmarshaling using a `map` as the middleware.
+- Case-insensitive JSON unmarshalling using a `map` as the middleware.
 - Deep-clone.
 - Support pointers.
 - No third party dependency. All features are implemented using the standard library.
@@ -36,7 +36,7 @@ fmt.Println(conv.Int("123"))         // -> 123
 fmt.Println(conv.String(3.14))       // -> "3.14"
 fmt.Println(conv.Float64("invalid")) // -> get an error
 
-// When converting intergers, overflow-checking is applied.
+// When converting integers, overflow-checking is applied.
 fmt.Println(conv.Int8(1000)) // -> overflow
 
 // A zero value of number is converted to false; a non-zero value is converted to true.
@@ -77,7 +77,7 @@ out, err = conv.ConvertType(user, reflect.TypeOf(user))
 fmt.Printf("%+v\n", out) // -> DemoUser{Name: "Bob", MailAddr: "bob@example.org", Age: 51}
 
 // Convert() is similar to ConvertType(), but receive a pointer instead of a type.
-// Is't more like some functions in the standard library such as json.Unmarshal().
+// It's more like some functions in the standard library such as json.Unmarshal().
 clone := DemoUser{}
 conv.Convert(user, &clone)
 fmt.Printf("%+v\n", clone) // -> DemoUser{Name: "Bob", MailAddr: "bob@example.org", Age: 51}
@@ -136,7 +136,7 @@ fmt.Printf("%+v\n", user) // -> DemoUser{Name: "Bob", MailAddr: "bob@example.org
 // The json package of the standard library does not support matching fields in case-insensitive manner.
 // We have to use field tag to specify the name of JSON properties.
 // With FieldMatcherCreator, we can unmarshal JSON in case-insensitive manner, using a map as a middleware.
-// Thou the performace is not good, but it works :) .
+// Thou the performance is not good, but it works :) .
 middleware := make(map[string]interface{})
 _ = json.Unmarshal([]byte(`{"name":"Alice", "mailAddr":"alice@example.org", "isVip": true, "age":27}`), &middleware)
 _ = c.Convert(middleware, &user)
@@ -155,7 +155,7 @@ Output:
 
 Not good. The code use reflect heavily, be aware if you are care for the performance.
 
-## Known issuse
+## Known issues
 
 - Embedded struct are not supported well. They are treated as normal fields now.
 - The field tags are not processed when converting from `struct` to `map`.
