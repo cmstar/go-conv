@@ -146,7 +146,7 @@ func (c *Conv) SimpleToBool(simple interface{}) (bool, error) {
 
 	typ := reflect.TypeOf(simple)
 	if IsPrimitiveType(typ) {
-		res, err := c.primitiveToBool(simple)
+		res, err := primitive.toBool(simple)
 		if err == nil {
 			return res, nil
 		}
@@ -188,7 +188,7 @@ func (c *Conv) SimpleToString(v interface{}) (string, error) {
 		return "", errForFunction(fnName, "cannot convert %v to a primitive value", k)
 	}
 
-	return c.primitiveToString(v), nil
+	return primitive.toString(v), nil
 }
 
 // SimpleToSimple converts a simple type, for which IsSimpleType() returns true, to another simple type.
@@ -243,7 +243,7 @@ func (c *Conv) simpleToLocalTime(src interface{}) (time.Time, error) {
 		return t.Local(), nil
 
 	case IsPrimitiveType(srcTyp):
-		timestamp, err := c.primitiveToPrimitive(src, reflect.Int64)
+		timestamp, err := primitive.toPrimitive(src, reflect.Int64)
 		if err != nil {
 			return zeroTime, err
 		}
@@ -257,7 +257,7 @@ func (c *Conv) simpleToLocalTime(src interface{}) (time.Time, error) {
 func (c *Conv) simpleToPrimitive(src interface{}, dstKind reflect.Kind) (interface{}, error) {
 	srcTyp := reflect.TypeOf(src)
 	if IsPrimitiveType(srcTyp) {
-		return c.primitiveToPrimitive(src, dstKind)
+		return primitive.toPrimitive(src, dstKind)
 	}
 
 	if srcTyp == typTime {
@@ -268,51 +268,11 @@ func (c *Conv) simpleToPrimitive(src interface{}, dstKind reflect.Kind) (interfa
 
 		case IsPrimitiveKind(dstKind):
 			timestamp := tm.Unix()
-			return c.primitiveToPrimitive(timestamp, dstKind)
+			return primitive.toPrimitive(timestamp, dstKind)
 		}
 	}
 
 	return nil, fmt.Errorf("cannot convert from %v to %v", srcTyp, dstKind)
-}
-
-func (c *Conv) primitiveToPrimitive(v interface{}, dstKind reflect.Kind) (interface{}, error) {
-	switch dstKind {
-	case reflect.Bool:
-		return c.primitiveToBool(v)
-	case reflect.String:
-		return c.primitiveToString(v), nil
-	case reflect.Int:
-		return c.primitiveToInt(v)
-	case reflect.Int8:
-		return c.primitiveToInt8(v)
-	case reflect.Int16:
-		return c.primitiveToInt16(v)
-	case reflect.Int32:
-		return c.primitiveToInt32(v)
-	case reflect.Int64:
-		return c.primitiveToInt64(v)
-	case reflect.Uint:
-		return c.primitiveToUint(v)
-	case reflect.Uint8:
-		return c.primitiveToUint8(v)
-	case reflect.Uint16:
-		return c.primitiveToUint16(v)
-	case reflect.Uint32:
-		return c.primitiveToUint32(v)
-	case reflect.Uint64:
-		return c.primitiveToUint64(v)
-	case reflect.Float32:
-		return c.primitiveToFloat32(v)
-	case reflect.Float64:
-		return c.primitiveToFloat64(v)
-	case reflect.Complex64:
-		return c.primitiveToComplex64(v)
-	case reflect.Complex128:
-		return c.primitiveToComplex128(v)
-	}
-
-	// This should never run.
-	panic("not a primitive type")
 }
 
 // SliceToSlice converts a slice to another slice.

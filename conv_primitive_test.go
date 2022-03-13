@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestConv_PrimitiveToBool(t *testing.T) {
+func Test_primitiveConv_toBool(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    interface{}
@@ -28,19 +28,19 @@ func TestConv_PrimitiveToBool(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := new(Conv).primitiveToBool(tt.args)
+			got, err := primitiveConv{}.toBool(tt.args)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Conv.primitiveToBool() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Conv.toBool() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("Conv.primitiveToBool() = %v, want %v", got, tt.want)
+				t.Errorf("Conv.toBool() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestConv_PrimitiveToString(t *testing.T) {
+func Test_primitiveConv_toString(t *testing.T) {
 	type args struct {
 		v interface{}
 	}
@@ -59,15 +59,15 @@ func TestConv_PrimitiveToString(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := new(Conv).primitiveToString(tt.args.v)
+			got := primitiveConv{}.toString(tt.args.v)
 			if got != tt.want {
-				t.Errorf("Conv.primitiveToString() = %v, want %v", got, tt.want)
+				t.Errorf("Conv.toString() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestConv_PrimitiveToInt64(t *testing.T) {
+func Test_primitiveConv_toInt64(t *testing.T) {
 	type args struct {
 		v interface{}
 	}
@@ -107,19 +107,19 @@ func TestConv_PrimitiveToInt64(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := new(Conv).primitiveToInt64(tt.args.v)
+			got, err := primitiveConv{}.toInt64(tt.args.v)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Conv.primitiveToInt64() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Conv.toInt64() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("Conv.primitiveToInt64() = %v, want %v", got, tt.want)
+				t.Errorf("Conv.toInt64() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestConv_PrimitiveToInt(t *testing.T) {
+func Test_primitiveConv_toInt(t *testing.T) {
 	type args struct {
 		v interface{}
 	}
@@ -133,19 +133,19 @@ func TestConv_PrimitiveToInt(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := new(Conv).primitiveToInt(tt.args.v)
+			got, err := primitiveConv{}.toInt(tt.args.v)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Conv.primitiveToInt() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Conv.toInt() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("Conv.primitiveToInt() = %v, want %v", got, tt.want)
+				t.Errorf("Conv.toInt() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestConv_PrimitiveToInt32(t *testing.T) {
+func Test_primitiveConv_toInt32(t *testing.T) {
 	type args struct {
 		v interface{}
 	}
@@ -162,19 +162,19 @@ func TestConv_PrimitiveToInt32(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := new(Conv).primitiveToInt32(tt.args.v)
+			got, err := primitiveConv{}.toInt32(tt.args.v)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Conv.primitiveToInt32() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Conv.toInt32() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("Conv.primitiveToInt32() = %v, want %v", got, tt.want)
+				t.Errorf("Conv.toInt32() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestConv_PrimitiveToInt16(t *testing.T) {
+func Test_primitiveConv_toInt16(t *testing.T) {
 	type args struct {
 		v interface{}
 	}
@@ -191,19 +191,19 @@ func TestConv_PrimitiveToInt16(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := new(Conv).primitiveToInt16(tt.args.v)
+			got, err := primitiveConv{}.toInt16(tt.args.v)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Conv.primitiveToInt16() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Conv.toInt16() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("Conv.primitiveToInt16() = %v, want %v", got, tt.want)
+				t.Errorf("Conv.toInt16() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestConv_PrimitiveToInt8(t *testing.T) {
+func Test_primitiveConv_toInt8(t *testing.T) {
 	type args struct {
 		v interface{}
 	}
@@ -220,19 +220,19 @@ func TestConv_PrimitiveToInt8(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := new(Conv).primitiveToInt8(tt.args.v)
+			got, err := primitiveConv{}.toInt8(tt.args.v)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Conv.primitiveToInt8() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Conv.toInt8() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("Conv.primitiveToInt8() = %v, want %v", got, tt.want)
+				t.Errorf("Conv.toInt8() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestConv_PrimitiveToUint64(t *testing.T) {
+func Test_primitiveConv_toUint64(t *testing.T) {
 	type args struct {
 		v interface{}
 	}
@@ -269,19 +269,19 @@ func TestConv_PrimitiveToUint64(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := new(Conv).primitiveToUint64(tt.args.v)
+			got, err := primitiveConv{}.toUint64(tt.args.v)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Conv.primitiveToUint64() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Conv.toUint64() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("Conv.primitiveToUint64() = %v, want %v", got, tt.want)
+				t.Errorf("Conv.toUint64() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestConv_PrimitiveToUint(t *testing.T) {
+func Test_primitiveConv_toUint(t *testing.T) {
 	type args struct {
 		v interface{}
 	}
@@ -295,19 +295,19 @@ func TestConv_PrimitiveToUint(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := new(Conv).primitiveToUint(tt.args.v)
+			got, err := primitiveConv{}.toUint(tt.args.v)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Conv.primitiveToUint() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Conv.toUint() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("Conv.primitiveToUint() = %v, want %v", got, tt.want)
+				t.Errorf("Conv.toUint() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestConv_PrimitiveToUint32(t *testing.T) {
+func Test_primitiveConv_toUint32(t *testing.T) {
 	type args struct {
 		v interface{}
 	}
@@ -323,19 +323,19 @@ func TestConv_PrimitiveToUint32(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := new(Conv).primitiveToUint32(tt.args.v)
+			got, err := primitiveConv{}.toUint32(tt.args.v)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Conv.primitiveToUint32() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Conv.toUint32() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("Conv.primitiveToUint32() = %v, want %v", got, tt.want)
+				t.Errorf("Conv.toUint32() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestConv_PrimitiveToUint16(t *testing.T) {
+func Test_primitiveConv_toUint16(t *testing.T) {
 	type args struct {
 		v interface{}
 	}
@@ -351,19 +351,19 @@ func TestConv_PrimitiveToUint16(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := new(Conv).primitiveToUint16(tt.args.v)
+			got, err := primitiveConv{}.toUint16(tt.args.v)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Conv.primitiveToUint16() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Conv.toUint16() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("Conv.primitiveToUint16() = %v, want %v", got, tt.want)
+				t.Errorf("Conv.toUint16() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestConv_PrimitiveToUint8(t *testing.T) {
+func Test_primitiveConv_toUint8(t *testing.T) {
 	type args struct {
 		v interface{}
 	}
@@ -379,19 +379,19 @@ func TestConv_PrimitiveToUint8(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := new(Conv).primitiveToUint8(tt.args.v)
+			got, err := primitiveConv{}.toUint8(tt.args.v)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Conv.primitiveToUint8() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Conv.toUint8() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("Conv.primitiveToUint8() = %v, want %v", got, tt.want)
+				t.Errorf("Conv.toUint8() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestConv_PrimitiveToFloat64(t *testing.T) {
+func Test_primitiveConv_toFloat64(t *testing.T) {
 	type args struct {
 		v interface{}
 	}
@@ -424,19 +424,19 @@ func TestConv_PrimitiveToFloat64(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := new(Conv).primitiveToFloat64(tt.args.v)
+			got, err := primitiveConv{}.toFloat64(tt.args.v)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Conv.primitiveToFloat64() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Conv.toFloat64() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("Conv.primitiveToFloat64() = %v, want %v", got, tt.want)
+				t.Errorf("Conv.toFloat64() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestConv_PrimitiveToFloat32(t *testing.T) {
+func Test_primitiveConv_toFloat32(t *testing.T) {
 	type args struct {
 		v interface{}
 	}
@@ -452,19 +452,19 @@ func TestConv_PrimitiveToFloat32(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := new(Conv).primitiveToFloat32(tt.args.v)
+			got, err := primitiveConv{}.toFloat32(tt.args.v)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Conv.primitiveToFloat32() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Conv.toFloat32() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("Conv.primitiveToFloat32() = %v, want %v", got, tt.want)
+				t.Errorf("Conv.toFloat32() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestConv_PrimitiveToComplex128(t *testing.T) {
+func Test_primitiveConv_toComplex128(t *testing.T) {
 	type args struct {
 		v interface{}
 	}
@@ -495,19 +495,19 @@ func TestConv_PrimitiveToComplex128(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := new(Conv).primitiveToComplex128(tt.args.v)
+			got, err := primitiveConv{}.toComplex128(tt.args.v)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Conv.primitiveToComplex128() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Conv.toComplex128() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("Conv.primitiveToComplex128() = %v, want %v", got, tt.want)
+				t.Errorf("Conv.toComplex128() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestConv_PrimitiveToComplex64(t *testing.T) {
+func Test_primitiveConv_toComplex64(t *testing.T) {
 	type args struct {
 		v interface{}
 	}
@@ -521,13 +521,13 @@ func TestConv_PrimitiveToComplex64(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := new(Conv).primitiveToComplex64(tt.args.v)
+			got, err := primitiveConv{}.toComplex64(tt.args.v)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Conv.primitiveToComplex64() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Conv.toComplex64() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("Conv.primitiveToComplex64() = %v, want %v", got, tt.want)
+				t.Errorf("Conv.toComplex64() = %v, want %v", got, tt.want)
 			}
 		})
 	}
