@@ -47,9 +47,12 @@ func IsPrimitiveType(t reflect.Type) bool {
 	return t != nil && IsPrimitiveKind(t.Kind())
 }
 
-// IsSimpleType returns true if the given type IsPrimitiveType() or is time.Time .
+// IsSimpleType returns true if the given type IsPrimitiveType() or is convertible to time.Time .
 func IsSimpleType(t reflect.Type) bool {
-	return IsPrimitiveType(t) || t == typTime
+	if t == nil {
+		return false
+	}
+	return IsPrimitiveType(t) || t.ConvertibleTo(typTime)
 }
 
 func isKindInt(k reflect.Kind) bool {

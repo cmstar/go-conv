@@ -205,24 +205,26 @@ func (c *Conv) SimpleToSimple(src interface{}, dstTyp reflect.Type) (interface{}
 		return nil, errSourceShouldNotBeNil(fnName)
 	}
 
+	var res interface{}
+	var err error
 	dstKind := dstTyp.Kind()
 	if IsPrimitiveKind(dstKind) {
-		res, err := c.simpleToPrimitive(src, dstKind)
-		if err != nil {
-			return nil, errForFunction(fnName, "%s", err)
-		}
-		return res, nil
+		res, err = c.simpleToPrimitive(src, dstKind)
+	} else if dstTyp.ConvertibleTo(typTime) {
+		res, err = c.simpleToLocalTime(src)
+	} else {
+		return nil, errForFunction(fnName, "cannot convert from %T to %v", src, dstTyp)
 	}
 
-	if dstTyp == typTime {
-		res, err := c.simpleToLocalTime(src)
-		if err != nil {
-			return nil, errForFunction(fnName, "%s", err)
-		}
-		return res, nil
+	if err != nil {
+		return nil, errForFunction(fnName, "%s", err)
 	}
 
-	return nil, errForFunction(fnName, "cannot convert from %T to %v", src, dstTyp)
+	// Convert if necessary.
+	if reflect.TypeOf(res) != dstTyp {
+		res = reflect.ValueOf(res).Convert(dstTyp).Interface()
+	}
+	return res, nil
 }
 
 func (c *Conv) simpleToLocalTime(src interface{}) (time.Time, error) {
@@ -456,7 +458,9 @@ func (c *Conv) MapToMap(m interface{}, typ reflect.Type) (interface{}, error) {
 // StructToMap is partially like json.Unmarshal(json.Marshal(v), &someMap) . It converts a struct to map[string]interface{} .
 //
 // Each value of exported field will be processed recursively with an internal function f() , which:
-//  - Simple types, for which IsSimpleType() returns true, will be cloned into the map directly.
+//  - Simple types, for which IsSimpleType() returns true:
+//    - A type whose kind is primitive, will be converted to a primitive value.
+//    - For other types, the value will be cloned into the map directly.
 //  - Slices:
 //    - A nil slice is converted to a nil slice; an empty slice is converted to an empty slice with cap=0.
 //    - A non-empty slice is converted to another slice, each element is process with f() , all elements must be the same type.
@@ -595,9 +599,19 @@ func (c *Conv) convertToMapValue(fv reflect.Value) (reflect.Value, error) {
 		return c.convertToMapValue(fv)
 
 	default:
+		if IsPrimitiveKind(fv.Kind()) {
+			res, err := c.simpleToPrimitive(fv.Interface(), fv.Kind())
+			if err != nil {
+				return reflect.Value{}, err
+			}
+			return reflect.ValueOf(res), nil
+		}
+
 		if !IsSimpleType(fv.Type()) {
 			return reflect.Value{}, fmt.Errorf("must be a simple type, got %v", fv.Kind())
 		}
+
+		// Consider convert types which are simple but non-primitive - such as time.Time - to primitive types?
 		return fv, nil
 	}
 }

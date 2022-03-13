@@ -11,7 +11,7 @@ import (
 )
 
 type S1 struct {
-	S     string
+	S     FromString
 	I     int
 	F     float64
 	inner int
@@ -32,10 +32,12 @@ type S3 struct {
 	inner interface{}
 }
 
+type FromString string
+
 type P2 struct {
 	*S1
 	inner *int
-	Out   *string
+	Out   *FromString
 	m     *map[string]int
 	Sl    *[]byte
 }
@@ -790,7 +792,7 @@ func TestConv_StructToMap(t *testing.T) {
 			args{
 				P2{
 					S1:  &S1{},
-					Out: new(string),
+					Out: new(FromString),
 					Sl:  new([]byte),
 				},
 			},
@@ -1036,7 +1038,7 @@ func TestConv_ConvertType_convertPointers(t *testing.T) {
 
 func TestConv_ConvertType_mapToStructWithPointers(t *testing.T) {
 	fieldS1 := S1{S: "23", I: 33, F: 44}
-	fieldOut := "3.14"
+	fieldOut := FromString("3.14")
 	p2 := P2{S1: &fieldS1, Out: &fieldOut}
 	pp2 := &p2
 	in := map[string]interface{}{
@@ -1349,7 +1351,7 @@ func TestConv_Convert_ptr(t *testing.T) {
 	})
 }
 
-func TestConv_TryFlattenEmptyKeyMap(t *testing.T) {
+func TestConv_tryFlattenEmptyKeyMap(t *testing.T) {
 	c := &Conv{}
 
 	type args struct {
