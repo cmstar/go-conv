@@ -766,6 +766,23 @@ func (c *Conv) Convert(src interface{}, dstPtr interface{}) error {
 	return nil
 }
 
+// MustConvertType is like ConvertType() but panics instead of returns an error.
+func (c *Conv) MustConvertType(src interface{}, dstTyp reflect.Type) interface{} {
+	res, err := c.ConvertType(src, dstTyp)
+	if err != nil {
+		panic(err)
+	}
+	return res
+}
+
+// MustConvert is like Convert() but panics instead of returns an error.
+func (c *Conv) MustConvert(src interface{}, dstPtr interface{}) {
+	err := c.Convert(src, dstPtr)
+	if err != nil {
+		panic(err)
+	}
+}
+
 // getUnderlyingValue extracts the underlying value if v is a pointer; otherwise returns v.
 // If the pointer points to nil, returns nil.
 func (c *Conv) getUnderlyingValue(v interface{}) interface{} {

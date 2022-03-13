@@ -560,3 +560,351 @@ func TestStructToMap(t *testing.T) {
 		})
 	}
 }
+
+func TestMustConvertType(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		if MustConvertType("1", reflect.TypeOf(1)) != 1 {
+			t.FailNow()
+		}
+	})
+
+	t.Run("panic", func(t *testing.T) {
+		defer func() {
+			r := recover()
+			if r == nil {
+				t.FailNow()
+			}
+		}()
+
+		MustConvertType(struct{}{}, reflect.TypeOf(1))
+	})
+}
+
+func TestMustConvert(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		var res int
+		MustConvert("33", &res)
+		if res != 33 {
+			t.FailNow()
+		}
+	})
+
+	t.Run("panic", func(t *testing.T) {
+		defer func() {
+			r := recover()
+			if r == nil {
+				t.FailNow()
+			}
+		}()
+
+		var res int
+		MustConvert("g", &res)
+	})
+}
+
+func TestMustBool(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		if MustBool(1) != true {
+			t.FailNow()
+		}
+	})
+
+	t.Run("panic", func(t *testing.T) {
+		defer func() {
+			r := recover()
+			if r == nil {
+				t.FailNow()
+			}
+		}()
+
+		MustBool(struct{}{})
+	})
+}
+
+func TestMustString(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		if MustString(1) != "1" {
+			t.FailNow()
+		}
+	})
+
+	t.Run("panic", func(t *testing.T) {
+		defer func() {
+			r := recover()
+			if r == nil {
+				t.FailNow()
+			}
+		}()
+
+		MustString(struct{}{})
+	})
+}
+
+func TestMustInt(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		if MustInt("100") != 100 {
+			t.FailNow()
+		}
+	})
+
+	t.Run("panic", func(t *testing.T) {
+		defer func() {
+			r := recover()
+			if r == nil {
+				t.FailNow()
+			}
+		}()
+
+		MustInt(struct{}{})
+	})
+}
+
+func TestMustInt64(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		if MustInt64("100") != int64(100) {
+			t.FailNow()
+		}
+	})
+
+	t.Run("panic", func(t *testing.T) {
+		defer func() {
+			r := recover()
+			if r == nil {
+				t.FailNow()
+			}
+		}()
+
+		MustInt64(struct{}{})
+	})
+}
+
+func TestMustInt32(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		if MustInt32("100") != int32(100) {
+			t.FailNow()
+		}
+	})
+
+	t.Run("panic", func(t *testing.T) {
+		defer func() {
+			r := recover()
+			if r == nil {
+				t.FailNow()
+			}
+		}()
+
+		MustInt32(struct{}{})
+	})
+}
+
+func TestMustInt16(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		if MustInt16("100") != int16(100) {
+			t.FailNow()
+		}
+	})
+
+	t.Run("panic", func(t *testing.T) {
+		defer func() {
+			r := recover()
+			if r == nil {
+				t.FailNow()
+			}
+		}()
+
+		MustInt16(struct{}{})
+	})
+}
+
+func TestMustInt8(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		if MustInt8("100") != int8(100) {
+			t.FailNow()
+		}
+	})
+
+	t.Run("panic", func(t *testing.T) {
+		defer func() {
+			r := recover()
+			if r == nil {
+				t.FailNow()
+			}
+		}()
+
+		MustInt8(struct{}{})
+	})
+}
+
+func TestMustUint(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		if MustUint("100") != uint(100) {
+			t.FailNow()
+		}
+	})
+
+	t.Run("panic", func(t *testing.T) {
+		defer func() {
+			r := recover()
+			if r == nil {
+				t.FailNow()
+			}
+		}()
+
+		MustUint(struct{}{})
+	})
+}
+
+func TestMustUint64(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		if MustUint64("100") != uint64(100) {
+			t.FailNow()
+		}
+	})
+
+	t.Run("panic", func(t *testing.T) {
+		defer func() {
+			r := recover()
+			if r == nil {
+				t.FailNow()
+			}
+		}()
+
+		MustUint64(struct{}{})
+	})
+}
+
+func TestMustUint32(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		if MustUint32("100") != uint32(100) {
+			t.FailNow()
+		}
+	})
+
+	t.Run("panic", func(t *testing.T) {
+		defer func() {
+			r := recover()
+			if r == nil {
+				t.FailNow()
+			}
+		}()
+
+		MustUint32(struct{}{})
+	})
+}
+
+func TestMustUint16(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		if MustUint16("100") != uint16(100) {
+			t.FailNow()
+		}
+	})
+
+	t.Run("panic", func(t *testing.T) {
+		defer func() {
+			r := recover()
+			if r == nil {
+				t.FailNow()
+			}
+		}()
+
+		MustUint16(struct{}{})
+	})
+}
+
+func TestMustUint8(t *testing.T) {
+
+	t.Run("ok", func(t *testing.T) {
+		if MustUint8("100") != uint8(100) {
+			t.FailNow()
+		}
+	})
+
+	t.Run("panic", func(t *testing.T) {
+		defer func() {
+			r := recover()
+			if r == nil {
+				t.FailNow()
+			}
+		}()
+
+		MustUint8(struct{}{})
+	})
+}
+
+func TestMustFloat64(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		if MustFloat64("100") != float64(100) {
+			t.FailNow()
+		}
+	})
+
+	t.Run("panic", func(t *testing.T) {
+		defer func() {
+			r := recover()
+			if r == nil {
+				t.FailNow()
+			}
+		}()
+
+		MustFloat64(struct{}{})
+	})
+}
+
+func TestMustFloat32(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		if MustFloat32("100") != float32(100) {
+			t.FailNow()
+		}
+	})
+
+	t.Run("panic", func(t *testing.T) {
+		defer func() {
+			r := recover()
+			if r == nil {
+				t.FailNow()
+			}
+		}()
+
+		MustFloat32(struct{}{})
+	})
+}
+
+func TestMustMapToStruct(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		res := MustMapToStruct(map[string]interface{}{"I": 1}, reflect.TypeOf(S1{}))
+		if !reflect.DeepEqual(res, S1{I: 1}) {
+			t.FailNow()
+		}
+	})
+
+	t.Run("panic", func(t *testing.T) {
+		defer func() {
+			r := recover()
+			if r == nil {
+				t.FailNow()
+			}
+		}()
+
+		MustMapToStruct(map[string]interface{}{"I": "err"}, reflect.TypeOf(S1{}))
+	})
+}
+
+func TestMustStructToMap(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		res := MustStructToMap(S1{I: 1})
+		if !reflect.DeepEqual(res, map[string]interface{}{"I": 1, "F": 0.0, "S": ""}) {
+			t.FailNow()
+		}
+	})
+
+	t.Run("panic", func(t *testing.T) {
+		defer func() {
+			r := recover()
+			if r == nil {
+				t.FailNow()
+			}
+		}()
+
+		MustStructToMap(1)
+	})
+}
