@@ -70,7 +70,7 @@ func TestIsSimpleType(t *testing.T) {
 	}
 }
 
-func TestErrCantConvertTo(t *testing.T) {
+func Test_errCantConvertTo(t *testing.T) {
 	e := errCantConvertTo(99, "dst")
 	want := "cannot convert 99 (int) to dst"
 	if e.Error() != want {
@@ -78,7 +78,7 @@ func TestErrCantConvertTo(t *testing.T) {
 	}
 }
 
-func TestErrValueOverflow(t *testing.T) {
+func Test_errValueOverflow(t *testing.T) {
 	e := errValueOverflow(true, "dst")
 	want := "value overflow when converting true (bool) to dst"
 	if e.Error() != want {
@@ -86,7 +86,7 @@ func TestErrValueOverflow(t *testing.T) {
 	}
 }
 
-func TestErrPrecisionLoss(t *testing.T) {
+func Test_errPrecisionLoss(t *testing.T) {
 	e := errPrecisionLoss(1.5, "dst")
 	want := "lost precision when converting 1.5 (float64) to dst"
 	if e.Error() != want {
