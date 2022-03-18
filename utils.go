@@ -9,6 +9,9 @@ import (
 	"time"
 )
 
+// The alias of the empty interface. Go 1.18 defines this but in earlier versions we can't use it.
+type any = interface{}
+
 var (
 	minInt   int64
 	maxInt   int64
