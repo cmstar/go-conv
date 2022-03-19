@@ -78,7 +78,7 @@ type SimpleMatcherConfig struct {
 // It is used as the default value when Conv.Config.FieldMatcher is nil.
 type SimpleMatcherCreator struct {
 	Conf SimpleMatcherConfig
-	m    sync.Map
+	m    syncMap
 }
 
 // GetMatcher implements FieldMatcherCreator.GetMatcher().
@@ -94,13 +94,13 @@ func (c *SimpleMatcherCreator) GetMatcher(typ reflect.Type) FieldMatcher {
 type simpleMatcher struct {
 	conf SimpleMatcherConfig // Conf configures the matcher.
 	typ  reflect.Type        // The type of the struct.
-	fs   *sync.Map           // The fields. A thread-safe map[string]reflect.StructField.
+	fs   *syncMap            // The fields. A thread-safe map[string]reflect.StructField.
 	mu   sync.Mutex          // Used to initialize fs.
 }
 
 func (ix *simpleMatcher) MatchField(name string) (reflect.StructField, bool) {
 	// Init field mapping with double-lock check.
-	// mu is used only to initialize fs, fs is sync.Map so it doesn't need another lock.
+	// mu is used only to initialize fs, fs itself is thread-safe and doesn't need another lock.
 	if ix.fs == nil {
 		ix.mu.Lock()
 		if ix.fs == nil {
@@ -117,7 +117,7 @@ func (ix *simpleMatcher) MatchField(name string) (reflect.StructField, bool) {
 }
 
 func (ix *simpleMatcher) initFieldMap() {
-	m := new(sync.Map)
+	m := new(syncMap)
 	num := ix.typ.NumField()
 	for i := 0; i < num; i++ {
 		f := ix.typ.Field(i)

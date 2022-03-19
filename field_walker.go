@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-var fieldWalkerCache sync.Map
+var fieldWalkerCache syncMap
 
 // fieldWalker is used to traverse all field of a struct.
 //
