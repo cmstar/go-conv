@@ -100,3 +100,87 @@ func errForFunction(fn, msgFormat string, a ...interface{}) error {
 func errSourceShouldNotBeNil(fnName string) error {
 	return errForFunction(fnName, "the source value should not be nil")
 }
+
+// getFieldPath returns the path of an embedded field. Embedded pointers are supported.
+// Panics on invalid parameters.
+//
+// e.g.
+//   type A struct { X, Y int }
+//   type B struct { *A }
+//   type C struct { B }
+//   type D struct { *C }
+//
+//   getFieldPath(reflect.TypeOf(D{}), []int{0, 0, 0, 1}) //-> C.B.A.Y
+//
+func getFieldPath(typ reflect.Type, index []int) string {
+	var path string
+	for i := 0; i < len(index); i++ {
+		if typ.Kind() == reflect.Ptr {
+			typ = typ.Elem()
+		}
+		fs := typ.Field(index[i])
+		typ = fs.Type
+
+		if i > 0 {
+			path += "."
+		}
+		path += fs.Name
+	}
+	return path
+}
+
+// getFieldValue returns the value of the field at the given index.
+// If the field is a field of an embedded pointer of a struct, and the pointer is nil, this function will try to
+// initialize the value of the embedded pointer with the zero value.
+//
+// If the embedded poiter cannot be initialized, returns an error.
+//
+// If the value is nil, or is not an *addressable* struct, or the index is out of range,
+// or the length of index is 0, the function panics.
+//
+func getFieldValue(val reflect.Value, index []int) (reflect.Value, error) {
+	ln := len(index)
+	if ln == 0 {
+		panic("index must be given")
+	}
+
+	for val.Kind() == reflect.Ptr {
+		if val.IsNil() {
+			panic("value is nil")
+		}
+		val = val.Elem()
+	}
+
+	if val.Kind() != reflect.Struct {
+		panic("value must be struct")
+	}
+
+	current := val
+
+	// It the field is embedded, ensure the parent struct has value.
+	for i := 0; i < ln-1; i++ {
+		current = current.Field(index[i])
+
+		// The field may be a nested pointer such as **struct{...}, the check should be performed recursively.
+		for {
+			if current.Kind() != reflect.Ptr {
+				goto next
+			}
+
+			if current.IsNil() {
+				if !current.CanSet() {
+					return reflect.Value{}, fmt.Errorf("cannot set embedded pointer on field %s", getFieldPath(val.Type(), index[:i+1]))
+				}
+
+				// Initialize with the zero value of the underlying type.
+				v := reflect.New(current.Type().Elem())
+				current.Set(v)
+			}
+
+			current = current.Elem()
+		}
+	next:
+	}
+
+	return current.Field(index[ln-1]), nil
+}
