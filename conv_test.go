@@ -10,36 +10,17 @@ import (
 	"time"
 )
 
-type S1 struct {
-	S     FromString
-	I     int
-	F     float64
-	inner int
-}
-
-type S2 struct {
-	S1    S1
-	inner int
-	Out   string
-	m     map[string]int
-	Sl    []byte
-}
-
-type S3 struct {
-	In    interface{}
-	S1    interface{}
-	S2    interface{}
-	inner interface{}
-}
-
 type FromString string
+type FromInt int
 
-type P2 struct {
-	S1    *S1
-	inner *int
-	Out   *FromString
-	m     *map[string]int
-	Sl    *[]byte
+var _caseInsensitiveConv = &Conv{
+	Conf: Config{
+		FieldMatcherCreator: &SimpleMatcherCreator{
+			Conf: SimpleMatcherConfig{
+				CaseInsensitive: true,
+			},
+		},
+	},
 }
 
 func TestConv_StringToSlice(t *testing.T) {
@@ -83,7 +64,7 @@ func TestConv_StringToSlice(t *testing.T) {
 			if tt.useCustomConv {
 				got, err = customConv.StringToSlice(tt.args.v, tt.args.simpleSliceType)
 			} else {
-				got, err = new(Conv).StringToSlice(tt.args.v, tt.args.simpleSliceType)
+				got, err = defaultConv.StringToSlice(tt.args.v, tt.args.simpleSliceType)
 			}
 
 			if err != nil {
@@ -136,7 +117,7 @@ func TestConv_SimpleToBool(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := new(Conv).SimpleToBool(tt.args.v)
+			got, err := defaultConv.SimpleToBool(tt.args.v)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Bool() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -194,7 +175,7 @@ func TestConv_SimpleToString(t *testing.T) {
 			if tt.useCustConv {
 				got, err = customTimeConv.SimpleToString(tt.args.v)
 			} else {
-				got, err = new(Conv).SimpleToString(tt.args.v)
+				got, err = defaultConv.SimpleToString(tt.args.v)
 			}
 
 			if (err != nil) != tt.wantErr {
@@ -222,6 +203,8 @@ func TestConv_SimpleToSimple(t *testing.T) {
 			},
 		},
 	}
+
+	type Empty struct{}
 
 	type args struct {
 		src     interface{}
@@ -273,8 +256,8 @@ func TestConv_SimpleToSimple(t *testing.T) {
 		{"err-time-from-string", false, args{"date", reflect.TypeOf(spDate)}, nil, "^conv.SimpleToSimple: .+"},
 		{"err-time-from-complex", false, args{1 + 3i, reflect.TypeOf(spDate)}, nil, "lost imaginary part"},
 		{"err-time-to-int8", false, args{spDate, reflect.TypeOf(int8(0))}, nil, `value overflow`},
-		{"err-struct-int", false, args{S1{}, reflect.TypeOf(0)}, nil, `cannot convert from conv\.S1 to int`},
-		{"err-struct-struct", false, args{S1{}, reflect.TypeOf(S1{})}, nil, `cannot convert from conv\.S1 to conv\.S1`},
+		{"err-struct-int", false, args{Empty{}, reflect.TypeOf(0)}, nil, `cannot convert from conv\.Empty to int`},
+		{"err-struct-struct", false, args{Empty{}, reflect.TypeOf(Empty{})}, nil, `cannot convert from conv\.Empty to conv\.Empty`},
 		{"err-cust", true, args{time.Unix(0, 0), reflect.TypeOf("")}, nil, "we make a custom error for zero time"},
 	}
 	for _, tt := range tests {
@@ -284,7 +267,7 @@ func TestConv_SimpleToSimple(t *testing.T) {
 			if tt.useCustConv {
 				got, err = customTimeConv.SimpleToSimple(tt.args.src, tt.args.dstType)
 			} else {
-				got, err = new(Conv).SimpleToSimple(tt.args.src, tt.args.dstType)
+				got, err = defaultConv.SimpleToSimple(tt.args.src, tt.args.dstType)
 			}
 
 			if err != nil {
@@ -307,7 +290,7 @@ func TestConv_SimpleToSimple(t *testing.T) {
 
 func TestConv_SliceToSlice(t *testing.T) {
 	var nilI []int
-	var nilS1 []S1
+	var nilStruct []struct{}
 
 	type args struct {
 		src         interface{}
@@ -325,7 +308,7 @@ func TestConv_SliceToSlice(t *testing.T) {
 		{"string-int", args{[]string{"123", "321"}, reflect.TypeOf([]int{})}, []int{123, 321}, ""},
 		{"string-bool", args{[]string{"true", "1", "0"}, reflect.TypeOf([]bool{})}, []bool{true, true, false}, ""},
 		{"bool-string", args{[]bool{true, true, false}, reflect.TypeOf([]string{})}, []string{"1", "1", "0"}, ""},
-		{"nil-nil", args{nilI, reflect.TypeOf([]S1{})}, nilS1, ""},
+		{"nil-nil", args{nilI, reflect.TypeOf([]struct{}{})}, nilStruct, ""},
 
 		{"err", args{[]struct{}{{}}, reflect.TypeOf([]string{})}, nil, "^conv.SliceToSlice: .+, at index 0.+"},
 		{"err-nil", args{nil, reflect.TypeOf([]string{})}, nil, "should not be nil"},
@@ -335,7 +318,7 @@ func TestConv_SliceToSlice(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := new(Conv).SliceToSlice(tt.args.src, tt.args.dstSliceTyp)
+			got, err := defaultConv.SliceToSlice(tt.args.src, tt.args.dstSliceTyp)
 
 			if err != nil {
 				if tt.errRegex == "" {
@@ -356,131 +339,112 @@ func TestConv_SliceToSlice(t *testing.T) {
 }
 
 func TestConv_MapToStruct(t *testing.T) {
-	caseInsensitiveConv := &Conv{
-		Conf: Config{
-			FieldMatcherCreator: &SimpleMatcherCreator{
-				Conf: SimpleMatcherConfig{
-					CaseInsensitive: true,
-				},
-			},
-		},
-	}
-
 	type args struct {
-		m      map[string]interface{}
-		dstTyp reflect.Type
+		c        *Conv
+		m        map[string]interface{}
+		dstTyp   reflect.Type
+		want     interface{}
+		errRegex string
 	}
-	tests := []struct {
-		name        string
-		useCustConv bool
-		args        args
-		want        interface{}
-		errRegex    string
-	}{
-		{
-			"ok1",
-			false,
-			args{
-				map[string]interface{}{"I": 1, "F": 3.14, "S": "vv", "inner": 1},
-				reflect.TypeOf(S1{}),
-			},
-			S1{I: 1, F: 3.14, S: "vv", inner: 0},
-			"",
-		},
+	check := func(t *testing.T, args args) {
+		got, err := args.c.MapToStruct(args.m, args.dstTyp)
 
-		{
-			"ok2",
-			false,
-			args{
-				map[string]interface{}{"I2": 1, "F": 3.14, "S2": "vv"},
-				reflect.TypeOf(S1{}),
-			},
-			S1{F: 3.14},
-			"",
-		},
+		if err != nil {
+			if args.errRegex == "" {
+				t.Errorf("MapToStruct() unexpected error = %v", err)
+			}
 
-		{
-			"nil",
-			false,
-			args{
-				map[string]interface{}(nil),
-				reflect.TypeOf(S1{}),
-			},
-			nil,
-			"should not be nil",
-		},
+			if match, _ := regexp.MatchString(args.errRegex, err.Error()); !match {
+				t.Errorf("MapToStruct() error = %v , must match %v",
+					strconv.Quote(err.Error()), strconv.Quote(args.errRegex))
+			}
+		}
 
-		{
-			"err-type",
-			false,
-			args{
-				map[string]interface{}{"i": 1, "f": 3.14, "s": "vv"},
-				reflect.TypeOf(1),
-			},
-			nil,
-			"type must be struct",
-		},
-
-		{
-			"err-field",
-			false,
-			args{
-				map[string]interface{}{"i": 1, "F": "x", "s": "vv"},
-				reflect.TypeOf(S1{}),
-			},
-			nil,
-			"error on converting field 'F': .+",
-		},
-
-		// Test custom IndexName.
-		{
-			"ok1-ci",
-			true,
-			args{
-				map[string]interface{}{"i": 1, "f": 3.14, "s": "vv"},
-				reflect.TypeOf(S1{}),
-			},
-			S1{I: 1, F: 3.14, S: "vv"},
-			"",
-		},
-
-		{
-			"ok2-ci",
-			true,
-			args{
-				map[string]interface{}{},
-				reflect.TypeOf(S1{}),
-			},
-			S1{},
-			"",
-		},
+		if !reflect.DeepEqual(got, args.want) {
+			t.Errorf("MapToStruct() = %v, want %v", got, args.want)
+		}
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var got interface{}
-			var err error
-			if tt.useCustConv {
-				got, err = caseInsensitiveConv.MapToStruct(tt.args.m, tt.args.dstTyp)
-			} else {
-				got, err = new(Conv).MapToStruct(tt.args.m, tt.args.dstTyp)
-			}
 
-			if err != nil {
-				if tt.errRegex == "" {
-					t.Errorf("MapToStruct() unexpected error = %v", err)
-				}
+	t.Run("ok-match", func(t *testing.T) {
+		type T struct {
+			S     FromString
+			I     int
+			F     float64
+			inner int
+		}
 
-				if match, _ := regexp.MatchString(tt.errRegex, err.Error()); !match {
-					t.Errorf("MapToStruct() error = %v , must match %v",
-						strconv.Quote(err.Error()), strconv.Quote(tt.errRegex))
-				}
-			}
-
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("MapToStruct() = %v, want %v", got, tt.want)
-			}
+		check(t, args{
+			c:        defaultConv,
+			m:        map[string]interface{}{"I": 1, "F": 3.14, "S": "vv", "inner": 1},
+			dstTyp:   reflect.TypeOf(T{}),
+			want:     T{I: 1, F: 3.14, S: "vv", inner: 0},
+			errRegex: "",
 		})
-	}
+	})
+
+	t.Run("ok-mismatch", func(t *testing.T) {
+		type T struct {
+			S FromString
+			I int
+			F float64
+		}
+
+		check(t, args{
+			c:        defaultConv,
+			m:        map[string]interface{}{"I2": 1, "F2": 3.14, "S2": "vv"},
+			dstTyp:   reflect.TypeOf(T{}),
+			want:     T{},
+			errRegex: "",
+		})
+	})
+
+	t.Run("err-nil", func(t *testing.T) {
+		check(t, args{
+			c:        defaultConv,
+			m:        map[string]interface{}(nil),
+			dstTyp:   reflect.TypeOf(struct{}{}),
+			want:     nil,
+			errRegex: "should not be nil",
+		})
+	})
+
+	t.Run("err-type", func(t *testing.T) {
+		check(t, args{
+			c:        defaultConv,
+			m:        map[string]interface{}{},
+			dstTyp:   reflect.TypeOf(1),
+			want:     nil,
+			errRegex: "type must be struct",
+		})
+	})
+
+	t.Run("err-field", func(t *testing.T) {
+		type T struct{ F float32 }
+
+		check(t, args{
+			c:        defaultConv,
+			m:        map[string]interface{}{"F": "x"},
+			dstTyp:   reflect.TypeOf(T{}),
+			want:     nil,
+			errRegex: "error on converting field 'F': .+",
+		})
+	})
+
+	t.Run("ok-case-insensitive", func(t *testing.T) {
+		type T struct {
+			S FromString
+			I int
+			F float64
+		}
+
+		check(t, args{
+			c:        _caseInsensitiveConv,
+			m:        map[string]interface{}{"i": 1, "f": 3.14, "s": "vv"},
+			dstTyp:   reflect.TypeOf(T{}),
+			want:     T{I: 1, F: 3.14, S: "vv"},
+			errRegex: "",
+		})
+	})
 }
 
 func TestConv_MapToMap(t *testing.T) {
@@ -582,7 +546,7 @@ func TestConv_MapToMap(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := new(Conv).MapToMap(tt.args.m, tt.args.dstTyp)
+			got, err := defaultConv.MapToMap(tt.args.m, tt.args.dstTyp)
 
 			if err != nil {
 				if tt.errRegex == "" {
@@ -604,350 +568,375 @@ func TestConv_MapToMap(t *testing.T) {
 
 func TestConv_StructToMap(t *testing.T) {
 	type args struct {
-		v interface{}
-	}
-	tests := []struct {
-		name     string
-		args     args
+		src      interface{}
 		want     map[string]interface{}
 		errRegex string
-	}{
-		{
-			"nil",
-			args{nil},
-			nil,
-			"^conv.StructToMap: .+should not be nil",
-		},
-
-		{
-			"simple1",
-			args{
-				S1{S: "1", F: 3, inner: 4},
-			},
-			map[string]interface{}{
-				"S": "1",
-				"I": 0,
-				"F": float64(3),
-			},
-			"",
-		},
-
-		{
-			"s2-empty",
-			args{
-				S2{},
-			},
-			map[string]interface{}{
-				"S1":  map[string]interface{}{"S": "", "I": 0, "F": float64(0)},
-				"Out": "",
-				"Sl":  []byte(nil),
-			},
-			"",
-		},
-
-		{
-			"s2",
-			args{
-				S2{
-					S1:    S1{S: "1", F: 3.3, inner: 4},
-					Out:   "o",
-					Sl:    []byte{100, 255},
-					m:     map[string]int{"a": 1},
-					inner: 33,
-				},
-			},
-			map[string]interface{}{
-				"S1": map[string]interface{}{
-					"S": "1",
-					"I": 0,
-					"F": float64(3.3),
-				},
-				"Out": "o",
-				"Sl":  []byte{100, 255},
-			},
-			"",
-		},
-
-		{
-			"err-src-kind",
-			args{
-				1,
-			},
-			nil,
-			"must be a struct",
-		},
-
-		{
-			"err-field-not-simple",
-			args{S3{In: make(chan int)}},
-			nil,
-			"^conv.StructToMap: error on converting field In: must be a simple type, got chan$",
-		},
-
-		{
-			"err-slice-elem-not-supported",
-			args{S3{In: []chan int{}}},
-			nil,
-			`cannot convert \[\]chan int`,
-		},
-
-		{
-			"err-map-key",
-			args{S3{In: map[chan int]int{make(chan int): 1}}},
-			nil,
-			`field In: key .+?: .+cannot convert chan int to string`,
-		},
-
-		{
-			"err-map-value",
-			args{S3{In: map[int]chan int{13: make(chan int)}}},
-			nil,
-			`field In: value of key 13: must be a simple type, got chan`,
-		},
-
-		{
-			"s3-map",
-			args{S3{In: map[int]string{1: "a", 2: "b"}}},
-			map[string]interface{}{"In": map[string]interface{}{"1": "a", "2": "b"}},
-			"",
-		},
-
-		{
-			"s3-map-nil",
-			args{S3{In: map[int]string(nil)}},
-			map[string]interface{}{"In": map[string]interface{}(nil)},
-			"",
-		},
-
-		{
-			"s3-slice-empty",
-			args{S3{In: []S1{}, inner: 3}},
-			map[string]interface{}{"In": []map[string]interface{}{}},
-			"",
-		},
-
-		{
-			"s3-slice-nil",
-			args{S3{In: []S1(nil), inner: 3}},
-			map[string]interface{}{"In": []map[string]interface{}(nil)},
-			"",
-		},
-
-		{
-			"s3-slice-struct",
-			args{
-				S3{
-					In: []S2{
-						{},
-						{Out: "o", Sl: []byte{1, 2, 3}, S1: S1{S: "酷", F: 2}},
-					},
-				},
-			},
-			map[string]interface{}{
-				"In": []map[string]interface{}{
-					{"Out": "", "Sl": []byte(nil), "S1": map[string]interface{}{"S": "", "I": 0, "F": float64(0)}},
-					{"Out": "o", "Sl": []byte{1, 2, 3}, "S1": map[string]interface{}{"S": "酷", "I": 0, "F": float64(2)}},
-				},
-			},
-			"",
-		},
-
-		{
-			"s3-slice-slice-empty",
-			args{S3{In: [][]S1{}}},
-			map[string]interface{}{"In": [][]map[string]interface{}{}},
-			"",
-		},
-
-		{
-			"s3-slice-slice",
-			args{
-				S3{
-					In: [][]S1{
-						{{S: "aa"}},
-						{{I: 33, F: 1.1}},
-					},
-				},
-			},
-			map[string]interface{}{
-				"In": [][]map[string]interface{}{
-					{{"S": "aa", "I": 0, "F": float64(0)}},
-					{{"S": "", "I": 33, "F": float64(1.1)}},
-				},
-			},
-			"",
-		},
-
-		{
-			"p2-nil-pointer",
-			args{
-				P2{},
-			},
-			map[string]interface{}{},
-			"",
-		},
-
-		{
-			"p2-non-nil-pointer",
-			args{
-				P2{
-					S1:  &S1{},
-					Out: new(FromString),
-					Sl:  new([]byte),
-				},
-			},
-			map[string]interface{}{
-				"S1": map[string]interface{}{
-					"S": "",
-					"I": 0,
-					"F": float64(0),
-				},
-				"Out": "",
-				"Sl":  []byte(nil),
-			},
-			"",
-		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := new(Conv).StructToMap(tt.args.v)
+	check := func(t *testing.T, args args) {
+		got, err := defaultConv.StructToMap(args.src)
 
-			if err != nil {
-				if tt.errRegex == "" {
-					t.Errorf("StructToMap() unexpected error = %v", err)
-				}
-
-				if match, _ := regexp.MatchString(tt.errRegex, err.Error()); !match {
-					t.Errorf("StructToMap() error = %v , must match %v",
-						strconv.Quote(err.Error()), strconv.Quote(tt.errRegex))
-				}
+		if err != nil {
+			if args.errRegex == "" {
+				t.Errorf("StructToMap() unexpected error = %v", err)
 			}
 
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("StructToMap() = %v, want %v", got, tt.want)
+			if match, _ := regexp.MatchString(args.errRegex, err.Error()); !match {
+				t.Errorf("StructToMap() error = %v , must match %v",
+					strconv.Quote(err.Error()), strconv.Quote(args.errRegex))
 			}
+		} else if args.errRegex != "" {
+			t.Errorf("StructToMap() want error, got nil, pattern = %v", args.errRegex)
+		}
+
+		if !reflect.DeepEqual(got, args.want) {
+			t.Errorf("StructToMap() = %v, want %v", got, args.want)
+		}
+	}
+
+	t.Run("nil", func(t *testing.T) {
+		check(t, args{
+			src:      nil,
+			want:     nil,
+			errRegex: "^conv.StructToMap: .+should not be nil",
 		})
-	}
+	})
+
+	t.Run("simple1", func(t *testing.T) {
+		check(t, args{
+			src: struct {
+				Str   string
+				Flt   float64
+				inner int
+			}{"aa", 0.5, 4},
+			want: map[string]interface{}{
+				"Str": "aa",
+				"Flt": 0.5,
+			},
+			errRegex: "",
+		})
+	})
+
+	t.Run("field-map-slice-without-value", func(t *testing.T) {
+		type T struct {
+			M map[string]int
+			S []struct{}
+		}
+
+		check(t, args{
+			src: T{},
+			want: map[string]interface{}{
+				"M": map[string]interface{}(nil),
+				"S": []map[string]interface{}(nil),
+			},
+			errRegex: "",
+		})
+	})
+
+	t.Run("field-map-slice-with-value", func(t *testing.T) {
+		type E struct{ V int }
+		type T struct {
+			M map[string]int
+			S []E
+		}
+
+		check(t, args{
+			src: T{
+				M: map[string]int{"A": 1, "B": 2},
+				S: []E{{22}, {33}},
+			},
+			want: map[string]interface{}{
+				"M": map[string]interface{}{
+					"A": 1,
+					"B": 2,
+				},
+				"S": []map[string]interface{}{
+					{"V": 22},
+					{"V": 33},
+				},
+			},
+			errRegex: "",
+		})
+	})
+
+	t.Run("err-src-kind", func(t *testing.T) {
+		check(t, args{
+			src:      1,
+			want:     nil,
+			errRegex: "must be a struct",
+		})
+	})
+
+	t.Run("err-field-not-simple", func(t *testing.T) {
+		check(t, args{
+			src:      struct{ C chan int }{make(chan int)},
+			want:     nil,
+			errRegex: "^conv.StructToMap: error on converting field C: must be a simple type, got chan$",
+		})
+	})
+
+	t.Run("err-slice-elem-not-supported", func(t *testing.T) {
+		type T struct{ V []chan int }
+
+		check(t, args{
+			src:      T{[]chan int{}},
+			want:     nil,
+			errRegex: `cannot convert \[\]chan int`,
+		})
+	})
+
+	t.Run("err-map-key", func(t *testing.T) {
+		type T struct{ In map[chan int]int }
+
+		check(t, args{
+			src:      T{map[chan int]int{make(chan int): 1}},
+			want:     nil,
+			errRegex: `field In: key .+?: .+cannot convert chan int to string`,
+		})
+	})
+
+	t.Run("err-map-key", func(t *testing.T) {
+		type T struct{ In map[int]chan int }
+
+		check(t, args{
+			src:      T{map[int]chan int{13: make(chan int)}},
+			want:     nil,
+			errRegex: `field In: value of key 13: must be a simple type, got chan`,
+		})
+	})
+
+	t.Run("field-map", func(t *testing.T) {
+		type T struct{ In map[int]string }
+
+		check(t, args{
+			src:      T{map[int]string{1: "a", 2: "b"}},
+			want:     map[string]interface{}{"In": map[string]interface{}{"1": "a", "2": "b"}},
+			errRegex: ``,
+		})
+	})
+
+	t.Run("field-map-nil", func(t *testing.T) {
+		type T struct{ In map[int]string }
+
+		check(t, args{
+			src:      T{},
+			want:     map[string]interface{}{"In": map[string]interface{}(nil)},
+			errRegex: ``,
+		})
+	})
+
+	t.Run("field-slice-empty", func(t *testing.T) {
+		type T struct{ In []struct{} }
+
+		check(t, args{
+			src:      T{[]struct{}{}},
+			want:     map[string]interface{}{"In": []map[string]interface{}{}},
+			errRegex: ``,
+		})
+	})
+
+	t.Run("field-slice-nil", func(t *testing.T) {
+		type T struct{ In []struct{} }
+
+		check(t, args{
+			src:      T{nil},
+			want:     map[string]interface{}{"In": []map[string]interface{}(nil)},
+			errRegex: ``,
+		})
+	})
+
+	t.Run("field-slice-value", func(t *testing.T) {
+		type Inner struct {
+			A string
+			B []byte
+		}
+		type T struct{ In []Inner }
+
+		check(t, args{
+			src: T{
+				In: []Inner{
+					{"A1", []byte{1, 2}},
+					{"A2", []byte{3, 4}},
+				},
+			},
+			want: map[string]interface{}{
+				"In": []map[string]interface{}{
+					{"A": "A1", "B": []byte{1, 2}},
+					{"A": "A2", "B": []byte{3, 4}},
+				},
+			},
+			errRegex: ``,
+		})
+	})
+
+	t.Run("pointer-nil", func(t *testing.T) {
+		type T struct{ In *int }
+
+		check(t, args{
+			src:      T{},
+			want:     map[string]interface{}{},
+			errRegex: ``,
+		})
+	})
+
+	t.Run("pointer-value", func(t *testing.T) {
+		type T struct{ In *struct{ A int } }
+
+		check(t, args{
+			src: T{&struct{ A int }{33}},
+			want: map[string]interface{}{
+				"In": map[string]interface{}{"A": 33},
+			},
+			errRegex: ``,
+		})
+	})
 }
 
 func TestConv_StructToStruct(t *testing.T) {
-	caseInsensitiveConv := &Conv{
-		Conf: Config{
-			FieldMatcherCreator: &SimpleMatcherCreator{
-				Conf: SimpleMatcherConfig{
-					CaseInsensitive: true,
-				},
-			},
-		},
-	}
-
-	type ss2 struct {
-		OUt float64
-		SL  []int
-	}
-
 	type args struct {
-		src    interface{}
-		dstTyp reflect.Type
+		c        *Conv
+		src      interface{}
+		dstTyp   reflect.Type
+		want     interface{}
+		errRegex string
 	}
-	tests := []struct {
-		name        string
-		useCustConv bool
-		args        args
-		want        interface{}
-		errRegex    string
-	}{
-		{
-			"err-nil",
-			false,
-			args{nil, reflect.TypeOf(S1{})},
-			nil,
-			"^conv.StructToStruct: the source value should not be nil$",
-		},
+	check := func(t *testing.T, args args) {
+		got, err := args.c.StructToStruct(args.src, args.dstTyp)
 
-		{
-			"err-src",
-			false,
-			args{1, reflect.TypeOf(S1{})},
-			nil,
-			"must be a struct, got int",
-		},
+		if err != nil {
+			if args.errRegex == "" {
+				t.Errorf("StructToMap() unexpected error = %v", err)
+			}
 
-		{
-			"err-dst",
-			false,
-			args{S1{}, reflect.TypeOf(1)},
-			nil,
-			"must be struct, got int",
-		},
+			if match, _ := regexp.MatchString(args.errRegex, err.Error()); !match {
+				t.Errorf("StructToMap() error = %v , must match %v",
+					strconv.Quote(err.Error()), strconv.Quote(args.errRegex))
+			}
+		} else if args.errRegex != "" {
+			t.Errorf("StructToMap() want error, got nil, pattern = %v", args.errRegex)
+		}
 
-		{
-			"err-field-nil",
-			false,
-			args{S3{}, reflect.TypeOf(S2{})},
-			nil,
-			"^conv.StructToStruct: error on converting field S1: conv.ConvertType: cannot convert nil to conv.S1$",
-		},
-
-		{
-			"err-field-type",
-			false,
-			args{S3{S1: make(chan int)}, reflect.TypeOf(S2{})},
-			nil,
-			"^conv.StructToStruct: error on converting field S1: conv.ConvertType: cannot convert chan int to conv.S1$",
-		},
-
-		{
-			"field-mismatch",
-			false,
-			args{S3{In: make(chan int), S1: S1{}}, reflect.TypeOf(S2{})},
-			S2{},
-			"",
-		},
-
-		{
-			"clone",
-			false,
-			args{S1{S: "gg", I: 333, F: -1.23, inner: 44}, reflect.TypeOf(S1{})},
-			S1{S: "gg", I: 333, F: -1.23},
-			"",
-		},
-
-		// Test custom IndexName .
-		{
-			"custom-name",
-			true,
-			args{S2{Out: "-1999", Sl: []byte{3, 5, 77}, inner: 44}, reflect.TypeOf(ss2{})},
-			ss2{OUt: float64(-1999), SL: []int{3, 5, 77}},
-			"",
-		},
+		if !reflect.DeepEqual(got, args.want) {
+			t.Errorf("StructToStruct() = %v, want %v", got, args.want)
+		}
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var got interface{}
-			var err error
-			if tt.useCustConv {
-				got, err = caseInsensitiveConv.StructToStruct(tt.args.src, tt.args.dstTyp)
-			} else {
-				got, err = new(Conv).StructToStruct(tt.args.src, tt.args.dstTyp)
-			}
 
-			if err != nil {
-				if tt.errRegex == "" {
-					t.Errorf("StructToMap() unexpected error = %v", err)
-				}
-
-				if match, _ := regexp.MatchString(tt.errRegex, err.Error()); !match {
-					t.Errorf("StructToMap() error = %v , must match %v",
-						strconv.Quote(err.Error()), strconv.Quote(tt.errRegex))
-				}
-			}
-
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("StructToStruct() = %v, want %v", got, tt.want)
-			}
+	t.Run("err-nil", func(t *testing.T) {
+		check(t, args{
+			c:        defaultConv,
+			src:      nil,
+			dstTyp:   reflect.TypeOf(struct{}{}),
+			want:     nil,
+			errRegex: "^conv.StructToStruct: the source value should not be nil$",
 		})
-	}
+	})
+
+	t.Run("err-src", func(t *testing.T) {
+		check(t, args{
+			c:        defaultConv,
+			src:      1,
+			dstTyp:   reflect.TypeOf(struct{}{}),
+			want:     nil,
+			errRegex: "^conv.StructToStruct: the given value must be a struct, got int$",
+		})
+	})
+
+	t.Run("err-dst", func(t *testing.T) {
+		check(t, args{
+			c:        defaultConv,
+			src:      struct{}{},
+			dstTyp:   reflect.TypeOf(1),
+			want:     nil,
+			errRegex: "^conv.StructToStruct: the destination type must be struct, got int$",
+		})
+	})
+
+	t.Run("err-field-nil", func(t *testing.T) {
+		type from struct {
+			V interface{}
+		}
+		type to struct {
+			V int
+		}
+
+		check(t, args{
+			c:        defaultConv,
+			src:      from{},
+			dstTyp:   reflect.TypeOf(to{}),
+			want:     nil,
+			errRegex: "^conv.StructToStruct: error on converting field V: conv.ConvertType: cannot convert nil to int$",
+		})
+	})
+
+	t.Run("err-field-type", func(t *testing.T) {
+		type from struct {
+			V chan int
+		}
+		type to struct {
+			V int
+		}
+
+		check(t, args{
+			c:        defaultConv,
+			src:      from{V: make(chan int)},
+			dstTyp:   reflect.TypeOf(to{}),
+			want:     nil,
+			errRegex: "^conv.StructToStruct: error on converting field V: conv.ConvertType: cannot convert chan int to int$",
+		})
+	})
+
+	t.Run("field-mismatch", func(t *testing.T) {
+		type from struct {
+			V chan int // Mismatched field will not cause error.
+		}
+		type to struct {
+			Other int
+		}
+
+		check(t, args{
+			c:        defaultConv,
+			src:      from{V: make(chan int)},
+			dstTyp:   reflect.TypeOf(to{}),
+			want:     to{},
+			errRegex: "",
+		})
+	})
+
+	t.Run("clone", func(t *testing.T) {
+		type T struct {
+			Str   FromString
+			Int   int
+			Flt   float64
+			inner int
+		}
+
+		check(t, args{
+			c:        defaultConv,
+			src:      T{Str: "gg", Int: 333, Flt: -1.23, inner: 44},
+			dstTyp:   reflect.TypeOf(T{}),
+			want:     T{Str: "gg", Int: 333, Flt: -1.23},
+			errRegex: "",
+		})
+	})
+
+	t.Run("clone-case-insensitive", func(t *testing.T) {
+		type from struct {
+			Out string
+			out string // Ignored.
+			Sl  []byte
+		}
+		type to struct {
+			OUt float64
+			SL  []int
+		}
+
+		check(t, args{
+			c:        _caseInsensitiveConv,
+			src:      from{Out: "-1999", Sl: []byte{3, 5, 77}},
+			dstTyp:   reflect.TypeOf(to{}),
+			want:     to{OUt: float64(-1999), SL: []int{3, 5, 77}},
+			errRegex: "",
+		})
+	})
 }
 
 func TestConv_ConvertType_convertPointers(t *testing.T) {
@@ -1001,7 +990,7 @@ func TestConv_ConvertType_convertPointers(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := new(Conv).ConvertType(tt.args.src, tt.args.dstTyp)
+			got, err := defaultConv.ConvertType(tt.args.src, tt.args.dstTyp)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ConvertType() error = %v, wantErr %v", err, tt.wantErr)
@@ -1037,9 +1026,22 @@ func TestConv_ConvertType_convertPointers(t *testing.T) {
 }
 
 func TestConv_ConvertType_mapToStructWithPointers(t *testing.T) {
-	fieldS1 := S1{S: "23", I: 33, F: 44}
+	type T struct {
+		S FromString
+		I int
+		F float64
+	}
+	type P struct {
+		S1    *T
+		inner *int
+		Out   *FromString
+		m     *map[string]int
+		Sl    *[]byte
+	}
+
+	fieldS1 := T{S: "23", I: 33, F: 44}
 	fieldOut := FromString("3.14")
-	p2 := P2{S1: &fieldS1, Out: &fieldOut}
+	p2 := P{S1: &fieldS1, Out: &fieldOut}
 	pp2 := &p2
 	in := map[string]interface{}{
 		"S1":    map[string]interface{}{"S": 23, "I": 33, "F": 44, "inner": 55},
@@ -1047,7 +1049,7 @@ func TestConv_ConvertType_mapToStructWithPointers(t *testing.T) {
 		"Sl":    nil,
 		"inner": -1,
 	}
-	res, err := new(Conv).ConvertType(in, reflect.TypeOf(pp2))
+	res, err := defaultConv.ConvertType(in, reflect.TypeOf(pp2))
 	if err != nil {
 		t.Errorf("ConvertType: %s", err)
 		return
@@ -1055,7 +1057,7 @@ func TestConv_ConvertType_mapToStructWithPointers(t *testing.T) {
 
 	// reflect.DeepEqual() doesn't compare the underlying values of pointers.
 	// We compare the fields manually.
-	out := *res.(*P2)
+	out := *res.(*P)
 	if out.inner != nil {
 		t.Error("inner != nil")
 		return
@@ -1089,25 +1091,31 @@ func TestConv_ConvertType_mapToStructWithPointers(t *testing.T) {
 
 func TestConv_ConvertType_sliceToSlice(t *testing.T) {
 	type s struct {
+		S     string
+		I     int64
+		F     float32
+		inner int
+	}
+	type sPtr struct {
 		S     *string
 		I     **int64
 		F     *float32
 		inner *int
 	}
 
-	in := []*S1{
+	in := []*s{
 		{S: "1", I: 3, inner: 5},
 		{S: "2", F: 4},
 	}
 
-	dstTyp := reflect.TypeOf([]*s{})
-	out, err := new(Conv).ConvertType(in, dstTyp)
+	dstTyp := reflect.TypeOf([]*sPtr{})
+	out, err := defaultConv.ConvertType(in, dstTyp)
 	if err != nil {
 		t.Errorf("err: %s", err.Error())
 		return
 	}
 
-	ss, ok := out.([]*s)
+	ss, ok := out.([]*sPtr)
 	if !ok {
 		t.Errorf("wrong type: %v", reflect.TypeOf(out))
 		return
@@ -1151,71 +1159,54 @@ func TestConv_ConvertType_sliceToSlice(t *testing.T) {
 }
 
 func TestConv_ConvertType_flatMap(t *testing.T) {
-	i := 1999
-	var pf *float32
 
-	type args struct {
-		src    interface{}
-		dstTyp reflect.Type
-	}
-	tests := []struct {
-		name     string
-		args     args
-		want     interface{}
-		errRegex string
-	}{
-		{
-			"simple",
-			args{
-				map[string]interface{}{
-					"": 87654321,
-				},
-				reflect.TypeOf(0),
+	t.Run("simple", func(t *testing.T) {
+		src := map[string]interface{}{
+			"": 87654321,
+		}
+		got, err := defaultConv.ConvertType(src, reflect.TypeOf(0))
+
+		if err != nil {
+			t.Fatalf("got error: %v", err)
+		}
+
+		if got != 87654321 {
+			t.Errorf("want %v, got %v", 87654321, got)
+		}
+	})
+
+	t.Run("map", func(t *testing.T) {
+		type T struct {
+			S FromString
+			I int
+			F float64
+		}
+
+		i := 1999
+		var pf *float32
+
+		src := map[string]interface{}{
+			"": map[interface{}]interface{}{
+				struct{ I *int }{&i}: nil,
+				struct{}{}:           pf,
+				struct{ S int }{123}: &pf,
 			},
-			87654321,
-			"",
-		},
+		}
+		got, err := defaultConv.ConvertType(src, reflect.TypeOf(map[T][]int{}))
 
-		{
-			"map[S1][]int",
-			args{
-				map[string]interface{}{
-					"": map[interface{}]interface{}{
-						struct{ I *int }{&i}: nil,
-						struct{}{}:           pf,
-						struct{ S int }{123}: &pf,
-					},
-				},
-				reflect.TypeOf(map[S1][]int{}),
-			},
-			map[S1][]int{
-				{I: 1999}:  nil,
-				{}:         nil,
-				{S: "123"}: nil,
-			},
-			"",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := new(Conv).ConvertType(tt.args.src, tt.args.dstTyp)
+		if err != nil {
+			t.Fatalf("got error: %v", err)
+		}
 
-			if err != nil {
-				if tt.errRegex == "" {
-					t.Errorf("ConvertType() unexpected error = %v", err)
-				}
-
-				if match, _ := regexp.MatchString(tt.errRegex, err.Error()); !match {
-					t.Errorf("ConvertType() error = %v , must match %v",
-						strconv.Quote(err.Error()), strconv.Quote(tt.errRegex))
-				}
-			}
-
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ConvertType() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+		want := map[T][]int{
+			{I: 1999}:  nil,
+			{}:         nil,
+			{S: "123"}: nil,
+		}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("want %v, got %v", 87654321, got)
+		}
+	})
 }
 
 func TestConv_ConvertType(t *testing.T) {
@@ -1242,7 +1233,7 @@ func TestConv_ConvertType(t *testing.T) {
 		{
 			"struct-map",
 			args{
-				S3{},
+				struct{ A, B interface{} }{},
 				reflect.TypeOf(map[string]interface{}{}),
 			},
 			map[string]interface{}{},
@@ -1251,7 +1242,7 @@ func TestConv_ConvertType(t *testing.T) {
 		{
 			"err-struct-wrong-map",
 			args{
-				S1{},
+				struct{}{},
 				reflect.TypeOf(map[int]interface{}{}),
 			},
 			nil,
@@ -1263,7 +1254,7 @@ func TestConv_ConvertType(t *testing.T) {
 			"err-wrong-map-string",
 			args{
 				map[float32]interface{}{},
-				reflect.TypeOf(S1{}),
+				reflect.TypeOf(struct{}{}),
 			},
 			nil,
 			`^conv.ConvertType: .+the map must be map\[string\]interface\{\}, got map\[float32\]interface.?\{\}$`,
@@ -1271,7 +1262,7 @@ func TestConv_ConvertType(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := new(Conv).ConvertType(tt.args.src, tt.args.dstTyp)
+			got, err := defaultConv.ConvertType(tt.args.src, tt.args.dstTyp)
 
 			if err != nil {
 				if tt.errRegex == "" {
@@ -1291,37 +1282,39 @@ func TestConv_ConvertType(t *testing.T) {
 	}
 }
 
-func TestConv_Convert_panicOnNil(t *testing.T) {
-	defer func() {
-		var err interface{}
-		if err = recover(); err == nil {
-			t.Fatalf("should panic an error")
-		}
+func TestConv_Convert_panic(t *testing.T) {
+	t.Run("nil", func(t *testing.T) {
+		defer func() {
+			var err interface{}
+			if err = recover(); err == nil {
+				t.Fatalf("should panic an error")
+			}
 
-		const wantMsg = "conv.Convert: the destination value must be a pointer"
-		if err.(error).Error() != wantMsg {
-			t.Fatalf("should panic an error with message: '%v', got '%v'", wantMsg, err)
-		}
-	}()
+			const wantMsg = "conv.Convert: the destination value must be a pointer"
+			if err.(error).Error() != wantMsg {
+				t.Fatalf("should panic an error with message: '%v', got '%v'", wantMsg, err)
+			}
+		}()
 
-	new(Conv).Convert(nil, 0)
-}
+		defaultConv.Convert(nil, 0)
+	})
 
-func TestConv_Convert_panicOnUninitialized(t *testing.T) {
-	defer func() {
-		var err interface{}
-		if err = recover(); err == nil {
-			t.Fatalf("should panic an error")
-		}
+	t.Run("uninitialized", func(t *testing.T) {
+		defer func() {
+			var err interface{}
+			if err = recover(); err == nil {
+				t.Fatalf("should panic an error")
+			}
 
-		const wantMsg = "conv.Convert: the pointer must be initialized"
-		if err.(error).Error() != wantMsg {
-			t.Fatalf("should panic an error with message: '%v', got '%v'", wantMsg, err)
-		}
-	}()
+			const wantMsg = "conv.Convert: the pointer must be initialized"
+			if err.(error).Error() != wantMsg {
+				t.Fatalf("should panic an error with message: '%v', got '%v'", wantMsg, err)
+			}
+		}()
 
-	var p *int
-	new(Conv).Convert("", p)
+		var p *int
+		defaultConv.Convert("", p)
+	})
 }
 
 func TestConv_Convert_ptr(t *testing.T) {
@@ -1330,21 +1323,21 @@ func TestConv_Convert_ptr(t *testing.T) {
 	ppi := &pi
 
 	t.Run("nil", func(t *testing.T) {
-		new(Conv).Convert(nil, pi)
+		defaultConv.Convert(nil, pi)
 		if *pi != 1 {
 			t.Errorf("want %v, got %v", i, *pi)
 		}
 	})
 
 	t.Run("string-p-int", func(t *testing.T) {
-		new(Conv).Convert("-54321", pi)
+		defaultConv.Convert("-54321", pi)
 		if *pi != -54321 {
 			t.Errorf("want %v, got %v", i, *pi)
 		}
 	})
 
 	t.Run("string-pp-int", func(t *testing.T) {
-		new(Conv).Convert("12345", ppi)
+		defaultConv.Convert("12345", ppi)
 		if **ppi != 12345 {
 			t.Errorf("want %v, got %v", i, *pi)
 		}

@@ -507,58 +507,62 @@ func TestTime(t *testing.T) {
 }
 
 func TestMapToStruct(t *testing.T) {
-	type args struct {
-		m      map[string]interface{}
-		dstTyp reflect.Type
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    interface{}
-		wantErr bool
-	}{
-		{"ok", args{map[string]interface{}{"I": 1}, reflect.TypeOf(S1{})}, S1{I: 1}, false},
-		{"err", args{map[string]interface{}{"I": "err"}, reflect.TypeOf(S1{})}, nil, true},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := MapToStruct(tt.args.m, tt.args.dstTyp)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("MapToStruct() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("MapToStruct() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+	t.Run("ok", func(t *testing.T) {
+		type T struct{ I float64 }
+
+		src := map[string]interface{}{"I": 1}
+		want := T{I: 1}
+		got, err := MapToStruct(src, reflect.TypeOf(want))
+
+		if err != nil {
+			t.Fatalf("got error: %v", err)
+		}
+
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("want %v, got %v", want, got)
+		}
+	})
+
+	t.Run("err", func(t *testing.T) {
+		type T struct{ F float64 }
+
+		src := map[string]interface{}{"F": "err"}
+		_, err := MapToStruct(src, reflect.TypeOf(T{}))
+
+		if err == nil {
+			t.Fatalf("want error")
+		}
+	})
 }
 
 func TestStructToMap(t *testing.T) {
-	type args struct {
-		v interface{}
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    map[string]interface{}
-		wantErr bool
-	}{
-		{"ok", args{S1{I: 1}}, map[string]interface{}{"I": 1, "F": 0.0, "S": ""}, false},
-		{"err", args{S3{In: func() {}}}, nil, true},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := StructToMap(tt.args.v)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("StructToMap() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("StructToMap() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+	t.Run("ok", func(t *testing.T) {
+		type T struct {
+			I int
+			S string
+		}
+
+		src := T{I: 11, S: "g"}
+		got, err := StructToMap(src)
+
+		if err != nil {
+			t.Fatalf("got error: %v", err)
+		}
+
+		want := map[string]interface{}{"I": 11, "S": "g"}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("want %v, got %v", want, got)
+		}
+	})
+
+	t.Run("err", func(t *testing.T) {
+		src := struct{ In func() }{func() {}}
+		_, err := StructToMap(src)
+
+		if err == nil {
+			t.Fatalf("want error")
+		}
+	})
 }
 
 func TestMustConvertType(t *testing.T) {
@@ -812,7 +816,6 @@ func TestMustUint16(t *testing.T) {
 }
 
 func TestMustUint8(t *testing.T) {
-
 	t.Run("ok", func(t *testing.T) {
 		if MustUint8("100") != uint8(100) {
 			t.FailNow()
@@ -871,8 +874,12 @@ func TestMustFloat32(t *testing.T) {
 
 func TestMustMapToStruct(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
-		res := MustMapToStruct(map[string]interface{}{"I": 1}, reflect.TypeOf(S1{}))
-		if !reflect.DeepEqual(res, S1{I: 1}) {
+		type T struct{ I int }
+
+		src := map[string]interface{}{"I": 1}
+		want := T{I: 1}
+		res := MustMapToStruct(src, reflect.TypeOf(want))
+		if !reflect.DeepEqual(res, want) {
 			t.FailNow()
 		}
 	})
@@ -885,14 +892,20 @@ func TestMustMapToStruct(t *testing.T) {
 			}
 		}()
 
-		MustMapToStruct(map[string]interface{}{"I": "err"}, reflect.TypeOf(S1{}))
+		src := map[string]interface{}{"I": "err"}
+		MustMapToStruct(src, reflect.TypeOf(struct{ I int }{}))
 	})
 }
 
 func TestMustStructToMap(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
-		res := MustStructToMap(S1{I: 1})
-		if !reflect.DeepEqual(res, map[string]interface{}{"I": 1, "F": 0.0, "S": ""}) {
+		type T struct {
+			Str string
+			Flt float64
+		}
+
+		res := MustStructToMap(T{Flt: 0.5})
+		if !reflect.DeepEqual(res, map[string]interface{}{"Flt": 0.5, "Str": ""}) {
 			t.FailNow()
 		}
 	})
