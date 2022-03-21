@@ -64,7 +64,7 @@ func TestConv_StringToSlice(t *testing.T) {
 			if tt.useCustomConv {
 				got, err = customConv.StringToSlice(tt.args.v, tt.args.simpleSliceType)
 			} else {
-				got, err = defaultConv.StringToSlice(tt.args.v, tt.args.simpleSliceType)
+				got, err = _defaultConv.StringToSlice(tt.args.v, tt.args.simpleSliceType)
 			}
 
 			if err != nil {
@@ -117,7 +117,7 @@ func TestConv_SimpleToBool(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := defaultConv.SimpleToBool(tt.args.v)
+			got, err := _defaultConv.SimpleToBool(tt.args.v)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Bool() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -175,7 +175,7 @@ func TestConv_SimpleToString(t *testing.T) {
 			if tt.useCustConv {
 				got, err = customTimeConv.SimpleToString(tt.args.v)
 			} else {
-				got, err = defaultConv.SimpleToString(tt.args.v)
+				got, err = _defaultConv.SimpleToString(tt.args.v)
 			}
 
 			if (err != nil) != tt.wantErr {
@@ -267,7 +267,7 @@ func TestConv_SimpleToSimple(t *testing.T) {
 			if tt.useCustConv {
 				got, err = customTimeConv.SimpleToSimple(tt.args.src, tt.args.dstType)
 			} else {
-				got, err = defaultConv.SimpleToSimple(tt.args.src, tt.args.dstType)
+				got, err = _defaultConv.SimpleToSimple(tt.args.src, tt.args.dstType)
 			}
 
 			if err != nil {
@@ -318,7 +318,7 @@ func TestConv_SliceToSlice(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := defaultConv.SliceToSlice(tt.args.src, tt.args.dstSliceTyp)
+			got, err := _defaultConv.SliceToSlice(tt.args.src, tt.args.dstSliceTyp)
 
 			if err != nil {
 				if tt.errRegex == "" {
@@ -374,7 +374,7 @@ func TestConv_MapToStruct(t *testing.T) {
 		}
 
 		check(t, args{
-			c:        defaultConv,
+			c:        _defaultConv,
 			m:        map[string]interface{}{"I": 1, "F": 3.14, "S": "vv", "inner": 1},
 			dstTyp:   reflect.TypeOf(T{}),
 			want:     T{I: 1, F: 3.14, S: "vv", inner: 0},
@@ -390,7 +390,7 @@ func TestConv_MapToStruct(t *testing.T) {
 		}
 
 		check(t, args{
-			c:        defaultConv,
+			c:        _defaultConv,
 			m:        map[string]interface{}{"I2": 1, "F2": 3.14, "S2": "vv"},
 			dstTyp:   reflect.TypeOf(T{}),
 			want:     T{},
@@ -400,7 +400,7 @@ func TestConv_MapToStruct(t *testing.T) {
 
 	t.Run("err-nil", func(t *testing.T) {
 		check(t, args{
-			c:        defaultConv,
+			c:        _defaultConv,
 			m:        map[string]interface{}(nil),
 			dstTyp:   reflect.TypeOf(struct{}{}),
 			want:     nil,
@@ -410,7 +410,7 @@ func TestConv_MapToStruct(t *testing.T) {
 
 	t.Run("err-type", func(t *testing.T) {
 		check(t, args{
-			c:        defaultConv,
+			c:        _defaultConv,
 			m:        map[string]interface{}{},
 			dstTyp:   reflect.TypeOf(1),
 			want:     nil,
@@ -422,7 +422,7 @@ func TestConv_MapToStruct(t *testing.T) {
 		type T struct{ F float32 }
 
 		check(t, args{
-			c:        defaultConv,
+			c:        _defaultConv,
 			m:        map[string]interface{}{"F": "x"},
 			dstTyp:   reflect.TypeOf(T{}),
 			want:     nil,
@@ -546,7 +546,7 @@ func TestConv_MapToMap(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := defaultConv.MapToMap(tt.args.m, tt.args.dstTyp)
+			got, err := _defaultConv.MapToMap(tt.args.m, tt.args.dstTyp)
 
 			if err != nil {
 				if tt.errRegex == "" {
@@ -573,7 +573,7 @@ func TestConv_StructToMap(t *testing.T) {
 		errRegex string
 	}
 	check := func(t *testing.T, args args) {
-		got, err := defaultConv.StructToMap(args.src)
+		got, err := _defaultConv.StructToMap(args.src)
 
 		if err != nil {
 			if args.errRegex == "" {
@@ -822,7 +822,7 @@ func TestConv_StructToStruct(t *testing.T) {
 
 	t.Run("err-nil", func(t *testing.T) {
 		check(t, args{
-			c:        defaultConv,
+			c:        _defaultConv,
 			src:      nil,
 			dstTyp:   reflect.TypeOf(struct{}{}),
 			want:     nil,
@@ -832,7 +832,7 @@ func TestConv_StructToStruct(t *testing.T) {
 
 	t.Run("err-src", func(t *testing.T) {
 		check(t, args{
-			c:        defaultConv,
+			c:        _defaultConv,
 			src:      1,
 			dstTyp:   reflect.TypeOf(struct{}{}),
 			want:     nil,
@@ -842,7 +842,7 @@ func TestConv_StructToStruct(t *testing.T) {
 
 	t.Run("err-dst", func(t *testing.T) {
 		check(t, args{
-			c:        defaultConv,
+			c:        _defaultConv,
 			src:      struct{}{},
 			dstTyp:   reflect.TypeOf(1),
 			want:     nil,
@@ -859,7 +859,7 @@ func TestConv_StructToStruct(t *testing.T) {
 		}
 
 		check(t, args{
-			c:        defaultConv,
+			c:        _defaultConv,
 			src:      from{},
 			dstTyp:   reflect.TypeOf(to{}),
 			want:     nil,
@@ -876,7 +876,7 @@ func TestConv_StructToStruct(t *testing.T) {
 		}
 
 		check(t, args{
-			c:        defaultConv,
+			c:        _defaultConv,
 			src:      from{V: make(chan int)},
 			dstTyp:   reflect.TypeOf(to{}),
 			want:     nil,
@@ -893,7 +893,7 @@ func TestConv_StructToStruct(t *testing.T) {
 		}
 
 		check(t, args{
-			c:        defaultConv,
+			c:        _defaultConv,
 			src:      from{V: make(chan int)},
 			dstTyp:   reflect.TypeOf(to{}),
 			want:     to{},
@@ -910,7 +910,7 @@ func TestConv_StructToStruct(t *testing.T) {
 		}
 
 		check(t, args{
-			c:        defaultConv,
+			c:        _defaultConv,
 			src:      T{Str: "gg", Int: 333, Flt: -1.23, inner: 44},
 			dstTyp:   reflect.TypeOf(T{}),
 			want:     T{Str: "gg", Int: 333, Flt: -1.23},
@@ -990,7 +990,7 @@ func TestConv_ConvertType_convertPointers(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := defaultConv.ConvertType(tt.args.src, tt.args.dstTyp)
+			got, err := _defaultConv.ConvertType(tt.args.src, tt.args.dstTyp)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ConvertType() error = %v, wantErr %v", err, tt.wantErr)
@@ -1049,7 +1049,7 @@ func TestConv_ConvertType_mapToStructWithPointers(t *testing.T) {
 		"Sl":    nil,
 		"inner": -1,
 	}
-	res, err := defaultConv.ConvertType(in, reflect.TypeOf(pp2))
+	res, err := _defaultConv.ConvertType(in, reflect.TypeOf(pp2))
 	if err != nil {
 		t.Errorf("ConvertType: %s", err)
 		return
@@ -1109,7 +1109,7 @@ func TestConv_ConvertType_sliceToSlice(t *testing.T) {
 	}
 
 	dstTyp := reflect.TypeOf([]*sPtr{})
-	out, err := defaultConv.ConvertType(in, dstTyp)
+	out, err := _defaultConv.ConvertType(in, dstTyp)
 	if err != nil {
 		t.Errorf("err: %s", err.Error())
 		return
@@ -1164,7 +1164,7 @@ func TestConv_ConvertType_flatMap(t *testing.T) {
 		src := map[string]interface{}{
 			"": 87654321,
 		}
-		got, err := defaultConv.ConvertType(src, reflect.TypeOf(0))
+		got, err := _defaultConv.ConvertType(src, reflect.TypeOf(0))
 
 		if err != nil {
 			t.Fatalf("got error: %v", err)
@@ -1192,7 +1192,7 @@ func TestConv_ConvertType_flatMap(t *testing.T) {
 				struct{ S int }{123}: &pf,
 			},
 		}
-		got, err := defaultConv.ConvertType(src, reflect.TypeOf(map[T][]int{}))
+		got, err := _defaultConv.ConvertType(src, reflect.TypeOf(map[T][]int{}))
 
 		if err != nil {
 			t.Fatalf("got error: %v", err)
@@ -1262,7 +1262,7 @@ func TestConv_ConvertType(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := defaultConv.ConvertType(tt.args.src, tt.args.dstTyp)
+			got, err := _defaultConv.ConvertType(tt.args.src, tt.args.dstTyp)
 
 			if err != nil {
 				if tt.errRegex == "" {
@@ -1296,7 +1296,7 @@ func TestConv_Convert_panic(t *testing.T) {
 			}
 		}()
 
-		defaultConv.Convert(nil, 0)
+		_defaultConv.Convert(nil, 0)
 	})
 
 	t.Run("uninitialized", func(t *testing.T) {
@@ -1313,7 +1313,7 @@ func TestConv_Convert_panic(t *testing.T) {
 		}()
 
 		var p *int
-		defaultConv.Convert("", p)
+		_defaultConv.Convert("", p)
 	})
 }
 
@@ -1323,21 +1323,21 @@ func TestConv_Convert_ptr(t *testing.T) {
 	ppi := &pi
 
 	t.Run("nil", func(t *testing.T) {
-		defaultConv.Convert(nil, pi)
+		_defaultConv.Convert(nil, pi)
 		if *pi != 1 {
 			t.Errorf("want %v, got %v", i, *pi)
 		}
 	})
 
 	t.Run("string-p-int", func(t *testing.T) {
-		defaultConv.Convert("-54321", pi)
+		_defaultConv.Convert("-54321", pi)
 		if *pi != -54321 {
 			t.Errorf("want %v, got %v", i, *pi)
 		}
 	})
 
 	t.Run("string-pp-int", func(t *testing.T) {
-		defaultConv.Convert("12345", ppi)
+		_defaultConv.Convert("12345", ppi)
 		if **ppi != 12345 {
 			t.Errorf("want %v, got %v", i, *pi)
 		}
