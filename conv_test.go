@@ -18,7 +18,7 @@ type S1 struct {
 }
 
 type S2 struct {
-	S1
+	S1    S1
 	inner int
 	Out   string
 	m     map[string]int
@@ -35,7 +35,7 @@ type S3 struct {
 type FromString string
 
 type P2 struct {
-	*S1
+	S1    *S1
 	inner *int
 	Out   *FromString
 	m     *map[string]int
