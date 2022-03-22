@@ -1,2 +1,5 @@
 # Hidden objects
 .*
+
+/tmp
+tmp_example_test.go
