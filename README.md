@@ -5,8 +5,6 @@
 [![codecov](https://codecov.io/gh/cmstar/go-conv/branch/master/graph/badge.svg)](https://codecov.io/gh/cmstar/go-conv)
 [![License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](https://opensource.org/licenses/MIT)
 
-[中文文档](README_zh.md)
-
 Features:
 
 - Supports conversion between numbers, string, time.
