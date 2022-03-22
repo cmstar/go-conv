@@ -157,5 +157,4 @@ Not good. The code use reflect heavily, be aware if you are care for the perform
 
 ## Known issues
 
-- Embedded struct are not supported well. They are treated as normal fields now.
-- The field tags are not processed when converting from `struct` to `map`.
+- The field tags are not processed when converting from `struct` to `map` or to other `struct`.
