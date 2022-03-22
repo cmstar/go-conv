@@ -245,3 +245,70 @@ func Test_simpleMatcher_fixCamelSnakeCaseName(t *testing.T) {
 		})
 	}
 }
+
+func Test_simpleMatcher_withEmbeddedStruct(t *testing.T) {
+	checkLen := func(t *testing.T, m *syncMap, want int) bool {
+		got := 0
+		m.Range(func(k, v interface{}) bool {
+			got++
+			return true
+		})
+		if got != want {
+			t.Errorf("want %d fields, got %d", want, got)
+			return false
+		}
+		return true
+	}
+
+	checkValue := func(t *testing.T, m *syncMap, key string, wantType reflect.Type) bool {
+		v, ok := m.Load(key)
+		if !ok {
+			t.Errorf("key %v does not exist", key)
+			return false
+		}
+
+		got := v.(fieldInfo).Type
+		if got != wantType {
+			t.Errorf("key %v, want type %v, got %v", key, wantType, got)
+			return false
+		}
+
+		return true
+	}
+
+	t.Run("embed", func(t *testing.T) {
+		type A struct{ V int }
+		type B struct{ A }
+		type C struct{ B }
+
+		mather := &simpleMatcher{typ: reflect.TypeOf(C{})}
+		mather.initFieldMap()
+
+		checkLen(t, mather.fs, 1)
+		checkValue(t, mather.fs, "V", reflect.TypeOf(0))
+	})
+
+	t.Run("hide", func(t *testing.T) {
+		type A struct {
+			V1 int
+			V2 int
+			V3 int
+		}
+		type B struct {
+			A
+			V1 string // Hides A.V1.
+		}
+		type C struct {
+			B
+			V2 float64 // Hides A.V2.
+		}
+
+		mather := &simpleMatcher{typ: reflect.TypeOf(C{})}
+		mather.initFieldMap()
+
+		checkLen(t, mather.fs, 3)
+		checkValue(t, mather.fs, "V1", reflect.TypeOf(""))
+		checkValue(t, mather.fs, "V2", reflect.TypeOf(0.0))
+		checkValue(t, mather.fs, "V3", reflect.TypeOf(0))
+	})
+}

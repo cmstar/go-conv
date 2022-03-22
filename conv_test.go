@@ -23,6 +23,16 @@ var _caseInsensitiveConv = &Conv{
 	},
 }
 
+var _tagConv = &Conv{
+	Conf: Config{
+		FieldMatcherCreator: &SimpleMatcherCreator{
+			Conf: SimpleMatcherConfig{
+				Tag: "conv",
+			},
+		},
+	},
+}
+
 func TestConv_StringToSlice(t *testing.T) {
 	customConv := &Conv{
 		Conf: Config{
@@ -430,18 +440,135 @@ func TestConv_MapToStruct(t *testing.T) {
 		})
 	})
 
-	t.Run("ok-case-insensitive", func(t *testing.T) {
+	t.Run("conv-basetype", func(t *testing.T) {
+		type Base struct{ V string }
+		type E Base
 		type T struct {
 			S FromString
+			I FromInt
+			E E
+		}
+
+		check(t, args{
+			c: _defaultConv,
+			m: map[string]interface{}{
+				"S": "vv",
+				"I": 12,
+				"E": map[string]interface{}{
+					"V": "x",
+				},
+			},
+			dstTyp: reflect.TypeOf(T{}),
+			want: T{
+				I: 12,
+				S: "vv",
+				E: E{
+					V: "x",
+				},
+			},
+			errRegex: "",
+		})
+	})
+
+	t.Run("conv-case-insensitive", func(t *testing.T) {
+		type T struct {
+			S string
 			I int
 			F float64
 		}
 
 		check(t, args{
-			c:        _caseInsensitiveConv,
-			m:        map[string]interface{}{"i": 1, "f": 3.14, "s": "vv"},
+			c: _caseInsensitiveConv,
+			m: map[string]interface{}{
+				"i": 1,
+				"f": 3.14,
+				"s": "vv",
+			},
 			dstTyp:   reflect.TypeOf(T{}),
 			want:     T{I: 1, F: 3.14, S: "vv"},
+			errRegex: "",
+		})
+	})
+
+	t.Run("conv-tag", func(t *testing.T) {
+		type T struct {
+			S string  `conv:"str"`
+			I int     `conv:"int"`
+			F float64 `conv:"flt"`
+		}
+
+		check(t, args{
+			c: _tagConv,
+			m: map[string]interface{}{
+				"int": 1,
+				"flt": 3.14,
+				"str": "vv",
+			},
+			dstTyp:   reflect.TypeOf(T{}),
+			want:     T{I: 1, F: 3.14, S: "vv"},
+			errRegex: "",
+		})
+	})
+
+	t.Run("conv-embedded-struct", func(t *testing.T) {
+		type E struct {
+			V1, V2 string
+		}
+		type T struct {
+			S string
+			E
+			I int
+		}
+		// Here T is equivalent to struct{S,V1,V2 string; I int}
+
+		check(t, args{
+			c: _defaultConv,
+			m: map[string]interface{}{
+				"I":  1,
+				"S":  "vv",
+				"V1": "v1",
+				"V2": "v2",
+			},
+			dstTyp: reflect.TypeOf(T{}),
+			want: T{
+				I: 1,
+				S: "vv",
+				E: E{
+					V1: "v1",
+					V2: "v2",
+				},
+			},
+			errRegex: "",
+		})
+	})
+
+	t.Run("ok-embedded-struct-with-tag", func(t *testing.T) {
+		type E struct {
+			V1    string
+			VE    string `conv:"e"`
+			inner string `conv:"VE"` // Unexported field is ignored.
+		}
+		type T struct {
+			S FromString   `conv:"str"`
+			E `conv:"emb"` // E has tag, so it is treated as a non-embedded field.
+		}
+
+		check(t, args{
+			c: _tagConv,
+			m: map[string]interface{}{
+				"emb": map[string]interface{}{
+					"V1": "v1",
+					"e":  "ve",
+					"VE": "x", // Not processed.
+				},
+			},
+			dstTyp: reflect.TypeOf(T{}),
+			want: T{
+				E: E{
+					V1: "v1",
+					VE: "ve",
+				},
+			},
 			errRegex: "",
 		})
 	})
@@ -568,12 +695,13 @@ func TestConv_MapToMap(t *testing.T) {
 
 func TestConv_StructToMap(t *testing.T) {
 	type args struct {
+		c        *Conv
 		src      interface{}
 		want     map[string]interface{}
 		errRegex string
 	}
 	check := func(t *testing.T, args args) {
-		got, err := _defaultConv.StructToMap(args.src)
+		got, err := args.c.StructToMap(args.src)
 
 		if err != nil {
 			if args.errRegex == "" {
@@ -595,14 +723,16 @@ func TestConv_StructToMap(t *testing.T) {
 
 	t.Run("nil", func(t *testing.T) {
 		check(t, args{
+			c:        _defaultConv,
 			src:      nil,
 			want:     nil,
 			errRegex: "^conv.StructToMap: .+should not be nil",
 		})
 	})
 
-	t.Run("simple1", func(t *testing.T) {
+	t.Run("simple", func(t *testing.T) {
 		check(t, args{
+			c: _defaultConv,
 			src: struct {
 				Str   string
 				Flt   float64
@@ -618,133 +748,49 @@ func TestConv_StructToMap(t *testing.T) {
 
 	t.Run("field-map-slice-without-value", func(t *testing.T) {
 		type T struct {
-			M map[string]int
-			S []struct{}
+			MNil   map[string]int
+			MEmpty map[string]int
+			SNil   []struct{}
+			SEmpty []struct{}
 		}
 
 		check(t, args{
-			src: T{},
+			c: _defaultConv,
+			src: T{
+				MEmpty: map[string]int{},
+				SEmpty: []struct{}{},
+			},
 			want: map[string]interface{}{
-				"M": map[string]interface{}(nil),
-				"S": []map[string]interface{}(nil),
+				"MNil":   map[string]interface{}(nil),
+				"MEmpty": map[string]interface{}{},
+				"SNil":   []map[string]interface{}(nil),
+				"SEmpty": []map[string]interface{}{},
 			},
 			errRegex: "",
 		})
 	})
 
-	t.Run("field-map-slice-with-value", func(t *testing.T) {
-		type E struct{ V int }
+	t.Run("field-map-with-value", func(t *testing.T) {
 		type T struct {
 			M map[string]int
-			S []E
 		}
 
 		check(t, args{
+			c: _defaultConv,
 			src: T{
 				M: map[string]int{"A": 1, "B": 2},
-				S: []E{{22}, {33}},
 			},
 			want: map[string]interface{}{
 				"M": map[string]interface{}{
 					"A": 1,
 					"B": 2,
 				},
-				"S": []map[string]interface{}{
-					{"V": 22},
-					{"V": 33},
-				},
 			},
 			errRegex: "",
 		})
 	})
 
-	t.Run("err-src-kind", func(t *testing.T) {
-		check(t, args{
-			src:      1,
-			want:     nil,
-			errRegex: "must be a struct",
-		})
-	})
-
-	t.Run("err-field-not-simple", func(t *testing.T) {
-		check(t, args{
-			src:      struct{ C chan int }{make(chan int)},
-			want:     nil,
-			errRegex: "^conv.StructToMap: error on converting field C: must be a simple type, got chan$",
-		})
-	})
-
-	t.Run("err-slice-elem-not-supported", func(t *testing.T) {
-		type T struct{ V []chan int }
-
-		check(t, args{
-			src:      T{[]chan int{}},
-			want:     nil,
-			errRegex: `cannot convert \[\]chan int`,
-		})
-	})
-
-	t.Run("err-map-key", func(t *testing.T) {
-		type T struct{ In map[chan int]int }
-
-		check(t, args{
-			src:      T{map[chan int]int{make(chan int): 1}},
-			want:     nil,
-			errRegex: `field In: key .+?: .+cannot convert chan int to string`,
-		})
-	})
-
-	t.Run("err-map-key", func(t *testing.T) {
-		type T struct{ In map[int]chan int }
-
-		check(t, args{
-			src:      T{map[int]chan int{13: make(chan int)}},
-			want:     nil,
-			errRegex: `field In: value of key 13: must be a simple type, got chan`,
-		})
-	})
-
-	t.Run("field-map", func(t *testing.T) {
-		type T struct{ In map[int]string }
-
-		check(t, args{
-			src:      T{map[int]string{1: "a", 2: "b"}},
-			want:     map[string]interface{}{"In": map[string]interface{}{"1": "a", "2": "b"}},
-			errRegex: ``,
-		})
-	})
-
-	t.Run("field-map-nil", func(t *testing.T) {
-		type T struct{ In map[int]string }
-
-		check(t, args{
-			src:      T{},
-			want:     map[string]interface{}{"In": map[string]interface{}(nil)},
-			errRegex: ``,
-		})
-	})
-
-	t.Run("field-slice-empty", func(t *testing.T) {
-		type T struct{ In []struct{} }
-
-		check(t, args{
-			src:      T{[]struct{}{}},
-			want:     map[string]interface{}{"In": []map[string]interface{}{}},
-			errRegex: ``,
-		})
-	})
-
-	t.Run("field-slice-nil", func(t *testing.T) {
-		type T struct{ In []struct{} }
-
-		check(t, args{
-			src:      T{nil},
-			want:     map[string]interface{}{"In": []map[string]interface{}(nil)},
-			errRegex: ``,
-		})
-	})
-
-	t.Run("field-slice-value", func(t *testing.T) {
+	t.Run("field-slice-with-value", func(t *testing.T) {
 		type Inner struct {
 			A string
 			B []byte
@@ -752,6 +798,7 @@ func TestConv_StructToMap(t *testing.T) {
 		type T struct{ In []Inner }
 
 		check(t, args{
+			c: _defaultConv,
 			src: T{
 				In: []Inner{
 					{"A1", []byte{1, 2}},
@@ -768,10 +815,62 @@ func TestConv_StructToMap(t *testing.T) {
 		})
 	})
 
+	t.Run("err-src-kind", func(t *testing.T) {
+		check(t, args{
+			c:        _defaultConv,
+			src:      1,
+			want:     nil,
+			errRegex: "must be a struct",
+		})
+	})
+
+	t.Run("err-field-not-simple", func(t *testing.T) {
+		check(t, args{
+			c:        _defaultConv,
+			src:      struct{ C chan int }{make(chan int)},
+			want:     nil,
+			errRegex: "^conv.StructToMap: error on converting field C: must be a simple type, got chan$",
+		})
+	})
+
+	t.Run("err-field-slice-elem-invalid", func(t *testing.T) {
+		type T struct{ V []chan int }
+
+		check(t, args{
+			c:        _defaultConv,
+			src:      T{[]chan int{}},
+			want:     nil,
+			errRegex: `cannot convert \[\]chan int`,
+		})
+	})
+
+	t.Run("err-field-map-key-invalid", func(t *testing.T) {
+		type T struct{ In map[chan int]int }
+
+		check(t, args{
+			c:        _defaultConv,
+			src:      T{map[chan int]int{make(chan int): 1}},
+			want:     nil,
+			errRegex: `field In: key .+?: .+cannot convert chan int to string`,
+		})
+	})
+
+	t.Run("err-field-map-value-invalid", func(t *testing.T) {
+		type T struct{ In map[int]chan int }
+
+		check(t, args{
+			c:        _defaultConv,
+			src:      T{map[int]chan int{13: make(chan int)}},
+			want:     nil,
+			errRegex: `field In: value of key 13: must be a simple type, got chan`,
+		})
+	})
+
 	t.Run("pointer-nil", func(t *testing.T) {
 		type T struct{ In *int }
 
 		check(t, args{
+			c:        _defaultConv,
 			src:      T{},
 			want:     map[string]interface{}{},
 			errRegex: ``,
@@ -782,9 +881,76 @@ func TestConv_StructToMap(t *testing.T) {
 		type T struct{ In *struct{ A int } }
 
 		check(t, args{
+			c:   _defaultConv,
 			src: T{&struct{ A int }{33}},
 			want: map[string]interface{}{
 				"In": map[string]interface{}{"A": 33},
+			},
+			errRegex: ``,
+		})
+	})
+
+	t.Run("embedded-struct", func(t *testing.T) {
+		type E2 struct {
+			VV1, VV2 string
+		}
+		type E struct {
+			E2
+			V1 int
+		}
+		type T struct {
+			S string
+			E
+		}
+
+		check(t, args{
+			c: _defaultConv,
+			src: T{
+				S: "ss",
+				E: E{
+					V1: 33,
+					E2: E2{
+						VV1: "vv1",
+						VV2: "vv2",
+					},
+				},
+			},
+			want: map[string]interface{}{
+				"S":   "ss",
+				"V1":  33,
+				"VV1": "vv1",
+				"VV2": "vv2",
+			},
+			errRegex: ``,
+		})
+	})
+
+	t.Run("embedded-struct-with-tag", func(t *testing.T) {
+		type E2 struct {
+			VV2 string `conv:"value2"`
+		}
+		type E struct {
+			E2 `conv:"ee2"`
+			V1 int `conv:"value1"`
+		}
+		type T struct {
+			E `conv:"ee"`
+		}
+
+		// TODO Convert from struct fields with tags are not supported now, it should come in the future.
+		check(t, args{
+			c: _tagConv,
+			src: T{
+				E: E{
+					V1: 12,
+					E2: E2{
+						VV2: "vv2",
+					},
+				},
+			},
+			want: map[string]interface{}{
+				"V1":  12,
+				"VV2": "vv2",
 			},
 			errRegex: ``,
 		})
@@ -804,19 +970,19 @@ func TestConv_StructToStruct(t *testing.T) {
 
 		if err != nil {
 			if args.errRegex == "" {
-				t.Errorf("StructToMap() unexpected error = %v", err)
+				t.Errorf("unexpected error = %v", err)
 			}
 
 			if match, _ := regexp.MatchString(args.errRegex, err.Error()); !match {
-				t.Errorf("StructToMap() error = %v , must match %v",
+				t.Errorf("error = %v , must match %v",
 					strconv.Quote(err.Error()), strconv.Quote(args.errRegex))
 			}
 		} else if args.errRegex != "" {
-			t.Errorf("StructToMap() want error, got nil, pattern = %v", args.errRegex)
+			t.Errorf("want error, got nil, pattern = %v", args.errRegex)
 		}
 
 		if !reflect.DeepEqual(got, args.want) {
-			t.Errorf("StructToStruct() = %v, want %v", got, args.want)
+			t.Errorf("want %v, got %v", args.want, got)
 		}
 	}
 
@@ -934,6 +1100,65 @@ func TestConv_StructToStruct(t *testing.T) {
 			src:      from{Out: "-1999", Sl: []byte{3, 5, 77}},
 			dstTyp:   reflect.TypeOf(to{}),
 			want:     to{OUt: float64(-1999), SL: []int{3, 5, 77}},
+			errRegex: "",
+		})
+	})
+
+	t.Run("embedded-struct", func(t *testing.T) {
+		type EFrom struct {
+			V1 int
+		}
+		type from struct {
+			EFrom
+			V2 int
+		}
+
+		type ETo struct {
+			V2 string
+		}
+		type to struct {
+			V1 string
+			ETo
+		}
+
+		check(t, args{
+			c: _defaultConv,
+			src: from{
+				EFrom: EFrom{11},
+				V2:    22,
+			},
+			dstTyp: reflect.TypeOf(to{}),
+			want: to{
+				V1:  "11",
+				ETo: ETo{"22"},
+			},
+			errRegex: "",
+		})
+	})
+
+	t.Run("embedded-struct-with-tag", func(t *testing.T) {
+		type Ef struct {
+			V1 int
+		}
+		type from struct {
+			Ef `conv:"F"`
+		}
+
+		type Et struct {
+			V int `conv:"V1"`
+		}
+		type to struct {
+			F Et
+		}
+
+		// TODO Convert from struct fields with tags are not supported now, it should come in the future.
+		check(t, args{
+			c: _tagConv,
+			src: from{
+				Ef: Ef{V1: 33},
+			},
+			dstTyp:   reflect.TypeOf(to{}),
+			want:     to{}, // Expect t{F: Et{V: 33}} when tags are supported.
 			errRegex: "",
 		})
 	})

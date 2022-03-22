@@ -94,7 +94,7 @@ func (c *SimpleMatcherCreator) GetMatcher(typ reflect.Type) FieldMatcher {
 type simpleMatcher struct {
 	conf SimpleMatcherConfig // Conf configures the matcher.
 	typ  reflect.Type        // The type of the struct.
-	fs   *syncMap            // The fields. A thread-safe map[string]reflect.StructField.
+	fs   *syncMap            // The fields. A thread-safe map[string]fieldInfo.
 	mu   sync.Mutex          // Used to initialize fs.
 }
 
@@ -111,44 +111,28 @@ func (ix *simpleMatcher) MatchField(name string) (reflect.StructField, bool) {
 
 	name = ix.fixName(name)
 	if f, ok := ix.fs.Load(name); ok {
-		return f.(reflect.StructField), ok
+		return f.(fieldInfo).StructField, ok
 	}
 	return reflect.StructField{}, false
 }
 
 func (ix *simpleMatcher) initFieldMap() {
 	m := new(syncMap)
-	num := ix.typ.NumField()
-	for i := 0; i < num; i++ {
-		f := ix.typ.Field(i)
 
-		// Ignore unexported fields. The document of PkgPath field says:
-		// PkgPath is the package path that qualifies a lower case (unexported)
-		// field name. It is empty for upper case (exported) field names.
-		if len(f.PkgPath) > 0 {
-			continue
-		}
-
+	walker := newFieldWalker(ix.typ, ix.conf.Tag)
+	walker.WalkFields(func(fi fieldInfo) bool {
 		// If a tag name is specified, use it; otherwise, use the raw field name.
-		// TODO Consider process fields of embedded structs.
-		var name string
-		if ix.conf.Tag != "" {
-			name = f.Tag.Get(ix.conf.Tag)
-		}
-
+		name := fi.Tag
 		if name == "" {
-			name = f.Name
+			name = fi.Name
 		}
 		name = ix.fixName(name)
 
 		// As FieldMatcher.IndexName() says, it returns the first matched name,
 		// When two field named may be transformed to the same name, we keep the first one.
-		if _, ok := m.Load(name); ok {
-			continue
-		}
-
-		m.Store(name, f)
-	}
+		m.LoadOrStore(name, fi)
+		return true
+	})
 	ix.fs = m
 }
 

@@ -346,7 +346,11 @@ func (c *Conv) MapToStruct(m map[string]interface{}, dstTyp reflect.Type) (inter
 			continue
 		}
 
-		fieldValue := dst.FieldByIndex(field.Index)
+		fieldValue, err := getFieldValue(dst, field.Index)
+		if err != nil {
+			return nil, errForFunction(fnName, err.Error())
+		}
+
 		if !fieldValue.CanSet() {
 			continue
 		}
@@ -447,26 +451,26 @@ func (c *Conv) StructToMap(v interface{}) (map[string]interface{}, error) {
 
 	src := reflect.ValueOf(v)
 	dst := reflect.MakeMap(reflect.TypeOf(map[string]interface{}(nil)))
+	walker := newFieldWalker(src.Type(), "") // TODO Tags on fields are not processed here.
 
-	for i := 0; i < src.NumField(); i++ {
-		fieldValue := src.Field(i)
-
-		// Ignore unexported fields.
-		if !fieldValue.CanInterface() {
-			continue
-		}
-
-		fieldName := srcTyp.Field(i).Name
-		ff, err := c.convertToMapValue(fieldValue)
+	var err error
+	walker.WalkValues(src, func(fi fieldInfo, fieldValue reflect.Value) bool {
+		var ff reflect.Value
+		ff, err = c.convertToMapValue(fieldValue)
 
 		if err != nil {
-			return nil, errForFunction(fnName, "error on converting field %v: %v", fieldName, err.Error())
+			err = errForFunction(fnName, "error on converting field %v: %v", fi.Name, err.Error())
+			return false
 		}
 
 		// If ff is nil value, the map index will not be set.
-		dst.SetMapIndex(reflect.ValueOf(fieldName), ff)
-	}
+		dst.SetMapIndex(reflect.ValueOf(fi.Name), ff)
+		return true
+	})
 
+	if err != nil {
+		return nil, err
+	}
 	return dst.Interface().(map[string]interface{}), nil
 }
 
@@ -636,32 +640,38 @@ func (c *Conv) StructToStruct(src interface{}, dstTyp reflect.Type) (interface{}
 	mather := ctor.GetMatcher(dstTyp)
 	vSrc := reflect.ValueOf(src)
 	vDst := reflect.New(dstTyp).Elem()
+	walker := newFieldWalker(vSrc.Type(), "") // TODO Tags on fields are not processed here.
 
-	for i := 0; i < vSrc.NumField(); i++ {
-		f := vSrc.Field(i)
-		if !f.CanInterface() {
-			continue
-		}
-
-		fName := srcTyp.Field(i).Name
-		field, ok := mather.MatchField(fName)
+	var err error
+	walker.WalkValues(vSrc, func(fi fieldInfo, fieldValue reflect.Value) bool {
+		field, ok := mather.MatchField(fi.Name)
 		if !ok {
-			continue
+			return true
 		}
 
-		vField := vDst.FieldByIndex(field.Index)
+		vField, e := getFieldValue(vDst, field.Index)
+		if e != nil {
+			err = errForFunction(fnName, e.Error())
+			return false
+		}
+
 		if !vField.CanSet() {
-			continue
+			return true
 		}
 
-		dstValue, err := c.ConvertType(f.Interface(), vField.Type())
-		if err != nil {
-			return nil, errForFunction(fnName, "error on converting field %v: %v", field.Name, err.Error())
+		dstValue, e := c.ConvertType(fieldValue.Interface(), vField.Type())
+		if e != nil {
+			err = errForFunction(fnName, "error on converting field %v: %v", field.Name, e.Error())
+			return false
 		}
 
 		vField.Set(reflect.ValueOf(dstValue))
-	}
+		return true
+	})
 
+	if err != nil {
+		return nil, err
+	}
 	return vDst.Interface(), nil
 }
 
