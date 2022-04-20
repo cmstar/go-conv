@@ -47,7 +47,7 @@ fmt.Println(conv.Bool("true"))  // -> true
 fmt.Println(conv.Bool("false")) // -> false
 
 // Numbers can be converted time.Time, they're treated as UNIX timestamp.
-// NOTE: The location of the time output is **local**.
+// For more information, see the example in go-doc.
 t, err := conv.Time(3600) // An hour later after 1970-01-01T00:00:00Z.
 // By default time.Time is converted to string with the RFC3339 format.
 fmt.Println(conv.String(t.UTC())) // -> 1970-01-01T01:00:00Z
