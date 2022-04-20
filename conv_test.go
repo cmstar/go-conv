@@ -546,7 +546,7 @@ func TestConv_MapToStruct(t *testing.T) {
 		type E struct {
 			V1    string
 			VE    string `conv:"e"`
-			inner string `conv:"VE"` // Unexported field is ignored.
+			inner string `conv:"VE"` //lint:ignore U1000 Unexported field is ignored.
 		}
 		type T struct {
 			S FromString   `conv:"str"`
@@ -1087,7 +1087,7 @@ func TestConv_StructToStruct(t *testing.T) {
 	t.Run("clone-case-insensitive", func(t *testing.T) {
 		type from struct {
 			Out string
-			out string // Ignored.
+			out string //lint:ignore U1000 Ignored.
 			Sl  []byte
 		}
 		type to struct {

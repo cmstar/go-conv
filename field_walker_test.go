@@ -76,7 +76,7 @@ func Test_fieldWalker_WalkFields(t *testing.T) {
 	t.Run("without-tag", func(t *testing.T) {
 		type Ec struct {
 			D int
-			x int
+			x int //lint:ignore U1000 Test unexported fields.
 		}
 		type Eb struct {
 			B  int // hided by T.B
@@ -109,7 +109,7 @@ func Test_fieldWalker_WalkFields(t *testing.T) {
 		}
 		type T struct {
 			*A
-			s int     `c:"V"`
+			s int     `c:"V"` //lint:ignore U1000 Test unexported fields.
 			B `c:"X"` // hides B.X, the traverse will not go into the field
 		}
 		walker := newFieldWalker(reflect.TypeOf(T{}), "c")
