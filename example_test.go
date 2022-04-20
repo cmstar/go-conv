@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/cmstar/go-conv"
 )
@@ -37,7 +38,7 @@ func Example() {
 	fmt.Println(conv.Bool("false")) // -> false
 
 	// Numbers can be converted time.Time, they're treated as UNIX timestamp.
-	// NOTE: The location of the time output is **local**.
+	// NOTE: The location of the time depends on the input type, see the example of time for more details.
 	t, err := conv.Time(3600) // An hour later after 1970-01-01T00:00:00Z.
 	// By default time.Time is converted to string with the RFC3339 format.
 	fmt.Println(conv.String(t.UTC())) // -> 1970-01-01T01:00:00Z
@@ -86,6 +87,46 @@ func Example() {
 	// {Name:Alice MailAddr: Age:27 IsVip:true}
 	// {Name:Bob MailAddr:bob@example.org Age:51 IsVip:false}
 	// {Name:Bob MailAddr:bob@example.org Age:51 IsVip:false}
+}
+
+func Example_timeConversion() {
+	// When converting to a time.Time, the location depends on the input value.
+
+	// When converting a number to a Time, returns a Time with the location time.Local, behaves like time.Unix().
+	t, _ := conv.Time(0) // Shortcut of conv.ConvertType(0, reflect.TypeOf(time.Time{})) .
+
+	fmt.Println("convert a number to a Time, the output location is:", t.Location()) // -> Local
+
+	// Returns a Time with offset 02:00, like time.Parse().
+	t, _ = conv.Time("2022-04-20T11:30:40+02:00")
+	_, offset := t.Zone()
+	fmt.Println(offset) // -> 7200 which is the total seconds of 02:00.
+
+	// Returns  a Time with time.UTC, like time.Parse().
+	t, _ = conv.Time("2022-04-20T11:30:40Z")
+	fmt.Println(t.Location()) // -> UTC
+
+	// When converting a Time to a Time, keeps the location: the raw value is cloned.
+	t, _ = conv.Time(time.Now())
+	fmt.Println("convert a Local time to a Local time, the output location is:", t.Location()) // -> Local
+	t, _ = conv.Time(time.Now().UTC())
+	fmt.Println("convert an UTC time to an UTC time, the output location is:", t.Location()) // -> UTC
+
+	// When converting a Time to a number, outputs an UNIX timestamp.
+	t, _ = time.Parse(time.RFC3339, "2022-04-20T03:30:40Z")
+	fmt.Println(conv.MustInt(t)) // -> 1650425440
+
+	// When converting a Time to a string, outputs using conv.DefaultTimeToString function, which format the time in RFC3339.
+	fmt.Println(conv.MustString(t)) // -> 2022-04-20T03:30:40Z
+
+	// Output:
+	// convert a number to a Time, the output location is: Local
+	// 7200
+	// UTC
+	// convert a Local time to a Local time, the output location is: Local
+	// convert an UTC time to an UTC time, the output location is: UTC
+	// 1650425440
+	// 2022-04-20T03:30:40Z
 }
 
 func Example_theConvInstance() {

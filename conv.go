@@ -191,13 +191,24 @@ func (c *Conv) SimpleToString(v interface{}) (string, error) {
 	return primitive.toString(v), nil
 }
 
-// SimpleToSimple converts a simple type, for which IsSimpleType() returns true, to another simple type.
-//
-// The conversion use the following rules:
-//   true/false is converted to number 0/1, or string '0'/'1'
-//   When converting a complex number to a real number, the imaginary part must be zero, the real part will be converted.
-//   When converting to time.Time, the time zone is always time.Local.
-//
+/*
+SimpleToSimple converts a simple type, for which IsSimpleType() returns true, to another simple type.
+The conversion use the following rules:
+
+Booleans:
+    - true/false is converted to number 0/1, or string '0'/'1'.
+	- From a boolean to a string: use strconv.ParseBool().
+	- From a number to a boolean: zero value as false; non-zero value as true.
+Numbers:
+    - From a complex number to a real number: the imaginary part must be zero, the real part will be converted.
+To time.Time:
+    - From a number: the number is treated as a Unix-timestamp as converted using time.Unix(),  the time zone is time.Local.
+    - From a string: use Conv.Conf.StringToTime function.
+    - From another time.Time: the raw value is cloned, includes the timestamp and the location.
+From time.Time:
+    - To a number: output a Unix-timestamp.
+	- To a string: use Conv.Conf.TimeToString function.
+*/
 func (c *Conv) SimpleToSimple(src interface{}, dstTyp reflect.Type) (interface{}, error) {
 	const fnName = "SimpleToSimple"
 
@@ -211,7 +222,7 @@ func (c *Conv) SimpleToSimple(src interface{}, dstTyp reflect.Type) (interface{}
 	if IsPrimitiveKind(dstKind) {
 		res, err = c.simpleToPrimitive(src, dstKind)
 	} else if dstTyp.ConvertibleTo(typTime) {
-		res, err = c.simpleToLocalTime(src)
+		res, err = c.simpleToTime(src)
 	} else {
 		return nil, errForFunction(fnName, "cannot convert from %T to %v", src, dstTyp)
 	}
@@ -227,11 +238,16 @@ func (c *Conv) SimpleToSimple(src interface{}, dstTyp reflect.Type) (interface{}
 	return res, nil
 }
 
-func (c *Conv) simpleToLocalTime(src interface{}) (time.Time, error) {
+/*
+time.Time -> raw value
+string -> Conv.Conf.StringToTime()
+number as unix-timestamp -> Local time
+*/
+func (c *Conv) simpleToTime(src interface{}) (time.Time, error) {
 	srcTyp := reflect.TypeOf(src)
 
 	if srcTyp == typTime {
-		return src.(time.Time).Local(), nil
+		return src.(time.Time), nil
 	}
 
 	switch {
@@ -240,14 +256,14 @@ func (c *Conv) simpleToLocalTime(src interface{}) (time.Time, error) {
 		if err != nil {
 			return zeroTime, err
 		}
-		return t.Local(), nil
+		return t, nil
 
 	case IsPrimitiveType(srcTyp):
 		timestamp, err := primitive.toPrimitive(src, reflect.Int64)
 		if err != nil {
 			return zeroTime, err
 		}
-		return time.Unix(timestamp.(int64), 0).Local(), nil
+		return time.Unix(timestamp.(int64), 0), nil // Get a local time.
 	}
 
 	// All simple types are processed in the switch block above, this line should never run.

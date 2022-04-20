@@ -200,11 +200,13 @@ func TestConv_SimpleToString(t *testing.T) {
 }
 
 func TestConv_SimpleToSimple(t *testing.T) {
-	spDate := time.Date(2021, 6, 3, 13, 21, 22, 54321, time.UTC).Local()
-	spDateWithoutNano := time.Unix(spDate.Unix(), 0).Local()
+	spUtcTime := time.Date(2021, 6, 3, 13, 21, 22, 54321, time.UTC)
+	spUtcTimeWithoutNano := time.Unix(spUtcTime.Unix(), 0).UTC()
+	spLocalTime := spUtcTime.Local()
+
 	customTimeConv := &Conv{
 		Conf: Config{
-			StringToTime: func(v string) (time.Time, error) { return spDate, nil },
+			StringToTime: func(v string) (time.Time, error) { return spLocalTime, nil },
 			TimeToString: func(t time.Time) (string, error) {
 				if t == time.Unix(0, 0) {
 					return "", errors.New("we make a custom error for zero time")
@@ -252,20 +254,20 @@ func TestConv_SimpleToSimple(t *testing.T) {
 		{"complex128-uint16", false, args{complex128(5544 + 0i), reflect.TypeOf(uint16(0))}, uint16(5544), ""},
 
 		// time
-		{"utc-local", false, args{spDate.UTC(), reflect.TypeOf(spDate)}, spDate, ""},
-		{"time-string", false, args{spDate, reflect.TypeOf("")}, spDate.Format(time.RFC3339), ""},
-		{"time-string-custom", true, args{spDate, reflect.TypeOf("")}, "20210603", ""},
-		{"string-time", false, args{"2021-06-03T13:21:22Z", reflect.TypeOf(spDate)}, spDateWithoutNano, ""},
-		{"string-time-custom", true, args{"any", reflect.TypeOf(spDate)}, spDate, ""}, // always returns spDate
-		{"time-int", false, args{spDate, reflect.TypeOf(0)}, int(spDate.Unix()), ""},
-		{"time-float", false, args{spDate, reflect.TypeOf(0.0)}, float64(spDate.Unix()), ""},
-		{"int-time", false, args{1622726482, reflect.TypeOf(spDate)}, spDateWithoutNano, ""},
+		{"utc-local", false, args{spUtcTime, reflect.TypeOf(time.Time{})}, spUtcTime, ""},
+		{"time-string", false, args{spLocalTime, reflect.TypeOf("")}, spLocalTime.Format(time.RFC3339), ""},
+		{"time-string-custom", true, args{spLocalTime, reflect.TypeOf("")}, "20210603", ""},
+		{"string-time", false, args{"2021-06-03T13:21:22Z", reflect.TypeOf(time.Time{})}, spUtcTimeWithoutNano, ""},
+		{"string-time-custom", true, args{"any", reflect.TypeOf(time.Time{})}, spLocalTime, ""}, // always returns spLocalTime
+		{"time-int", false, args{spLocalTime, reflect.TypeOf(0)}, int(spLocalTime.Unix()), ""},
+		{"time-float", false, args{spLocalTime, reflect.TypeOf(0.0)}, float64(spLocalTime.Unix()), ""},
+		{"int-time", false, args{1622726482, reflect.TypeOf(time.Time{})}, spUtcTimeWithoutNano.Local(), ""},
 
 		// err
 		{"err-nil", false, args{nil, reflect.TypeOf(1)}, nil, "^conv.SimpleToSimple: the source value should not be nil$"},
-		{"err-time-from-string", false, args{"date", reflect.TypeOf(spDate)}, nil, "^conv.SimpleToSimple: .+"},
-		{"err-time-from-complex", false, args{1 + 3i, reflect.TypeOf(spDate)}, nil, "lost imaginary part"},
-		{"err-time-to-int8", false, args{spDate, reflect.TypeOf(int8(0))}, nil, `value overflow`},
+		{"err-time-from-string", false, args{"date", reflect.TypeOf(time.Time{})}, nil, "^conv.SimpleToSimple: .+"},
+		{"err-time-from-complex", false, args{1 + 3i, reflect.TypeOf(time.Time{})}, nil, "lost imaginary part"},
+		{"err-time-to-int8", false, args{spLocalTime, reflect.TypeOf(int8(0))}, nil, `value overflow`},
 		{"err-struct-int", false, args{Empty{}, reflect.TypeOf(0)}, nil, `cannot convert from conv\.Empty to int`},
 		{"err-struct-struct", false, args{Empty{}, reflect.TypeOf(Empty{})}, nil, `cannot convert from conv\.Empty to conv\.Empty`},
 		{"err-cust", true, args{time.Unix(0, 0), reflect.TypeOf("")}, nil, "we make a custom error for zero time"},
