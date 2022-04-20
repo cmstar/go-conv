@@ -7,7 +7,7 @@ import (
 
 var fieldWalkerCache syncMap
 
-// fieldWalker is used to traverse all field of a struct.
+// FieldWalker is used to traverse all field of a struct.
 //
 // The traverse will go into each level of embedded and untagged structs. Unexported fields are ignored.
 // It reads fields in this order:
@@ -55,14 +55,15 @@ var fieldWalkerCache syncMap
 //   B        {1}      X
 //   A.A      {0, 0}
 //
-type fieldWalker struct {
+type FieldWalker struct {
 	typ     reflect.Type
 	tagName string
 	mu      sync.Mutex
-	fields  []fieldInfo
+	fields  []FieldInfo
 }
 
-type fieldInfo struct {
+// FieldInfo describes a field in a struct.
+type FieldInfo struct {
 	reflect.StructField
 
 	// If the field is a field of am embedded and untagged field which type is struct,
@@ -70,24 +71,26 @@ type fieldInfo struct {
 	Path string
 
 	// The tag value of the field.
-	Tag string
+	TagValue string
 }
 
-func newFieldWalker(typ reflect.Type, tagName string) *fieldWalker {
+// NewFieldWalker creates a new instance of FieldWalker.
+// When tagName is specified, the values of the tag will be filled into FieldInfo.TagValue during the traversal.
+func NewFieldWalker(typ reflect.Type, tagName string) *FieldWalker {
 	type key struct {
 		reflect.Type
 		string
 	}
-	v, _ := fieldWalkerCache.LoadOrStore(key{typ, tagName}, &fieldWalker{
+	v, _ := fieldWalkerCache.LoadOrStore(key{typ, tagName}, &FieldWalker{
 		typ:     typ,
 		tagName: tagName,
 	})
-	return v.(*fieldWalker)
+	return v.(*FieldWalker)
 }
 
 // WalkFields walks through fields of the given type of struct (or pointer) with a breadth-first traverse.
 // Each field will be send to the callback function. If the function returns false, the traverse stops.
-func (walker *fieldWalker) WalkFields(callback func(fieldInfo) bool) {
+func (walker *FieldWalker) WalkFields(callback func(FieldInfo) bool) {
 	if walker.fields == nil {
 		walker.initFields()
 	}
@@ -104,7 +107,7 @@ func (walker *fieldWalker) WalkFields(callback func(fieldInfo) bool) {
 // If a struct is embedded as a pointer, and the value is nil, the field is ignored.
 // If the given value is nil, the traverse stops with no callback.
 //
-func (walker *fieldWalker) WalkValues(value reflect.Value, callback func(fieldInfo, reflect.Value) bool) {
+func (walker *FieldWalker) WalkValues(value reflect.Value, callback func(FieldInfo, reflect.Value) bool) {
 	if walker.fields == nil {
 		walker.initFields()
 	}
@@ -125,7 +128,7 @@ func (walker *fieldWalker) WalkValues(value reflect.Value, callback func(fieldIn
 
 	for _, fieldInfo := range walker.fields {
 		index := fieldInfo.Index
-		embedded := fieldInfo.Tag == "" && len(index) > 1
+		embedded := fieldInfo.TagValue == "" && len(index) > 1
 
 		v := value
 		for i := 0; i < len(index); i++ {
@@ -150,7 +153,7 @@ func (walker *fieldWalker) WalkValues(value reflect.Value, callback func(fieldIn
 	}
 }
 
-func (walker *fieldWalker) initFields() {
+func (walker *FieldWalker) initFields() {
 	walker.mu.Lock()
 	defer walker.mu.Unlock()
 
@@ -159,7 +162,7 @@ func (walker *fieldWalker) initFields() {
 		return
 	}
 
-	fields := make([]fieldInfo, 0)
+	fields := make([]FieldInfo, 0)
 	visited := make(map[string]struct{})
 
 	type fieldBuf struct {
@@ -194,10 +197,10 @@ func (walker *fieldWalker) initFields() {
 				tagged[i] = true
 				visited[tag] = struct{}{}
 
-				fields = append(fields, fieldInfo{
+				fields = append(fields, FieldInfo{
 					StructField: f,
 					Path:        f.Name,
-					Tag:         tag,
+					TagValue:    tag,
 				})
 			}
 		}
@@ -240,7 +243,7 @@ func (walker *fieldWalker) initFields() {
 			}
 
 			visited[f.Name] = struct{}{}
-			fields = append(fields, fieldInfo{
+			fields = append(fields, FieldInfo{
 				StructField: f,
 				Path:        path,
 			})

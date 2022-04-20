@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func Test_fieldWalker_WalkFields(t *testing.T) {
+func TestFieldWalker_WalkFields(t *testing.T) {
 	type want struct {
 		Name  string
 		Path  string
@@ -13,9 +13,9 @@ func Test_fieldWalker_WalkFields(t *testing.T) {
 		Tag   string
 	}
 
-	check := func(t *testing.T, walker *fieldWalker, ws []want) {
+	check := func(t *testing.T, walker *FieldWalker, ws []want) {
 		i := 0
-		walker.WalkFields(func(f fieldInfo) bool {
+		walker.WalkFields(func(f FieldInfo) bool {
 			if i > len(ws)-1 {
 				t.Fatalf("too many fields, index: %d", i)
 			}
@@ -33,8 +33,8 @@ func Test_fieldWalker_WalkFields(t *testing.T) {
 				t.Fatalf("%s: want index %v, got %v", w.Name, w.Index, f.Index)
 			}
 
-			if f.Tag != w.Tag {
-				t.Fatalf("want tag %s, got %s", w.Tag, f.Tag)
+			if f.TagValue != w.Tag {
+				t.Fatalf("want tag %s, got %s", w.Tag, f.TagValue)
 			}
 
 			i++
@@ -47,9 +47,9 @@ func Test_fieldWalker_WalkFields(t *testing.T) {
 	}
 
 	t.Run("empty", func(t *testing.T) {
-		walker := newFieldWalker(reflect.TypeOf(struct{}{}), "")
+		walker := NewFieldWalker(reflect.TypeOf(struct{}{}), "")
 		count := 0
-		walker.WalkFields(func(fi fieldInfo) bool {
+		walker.WalkFields(func(fi FieldInfo) bool {
 			count++
 			return true
 		})
@@ -61,9 +61,9 @@ func Test_fieldWalker_WalkFields(t *testing.T) {
 
 	t.Run("top2", func(t *testing.T) {
 		type s struct{ X, Y, Z int }
-		walker := newFieldWalker(reflect.TypeOf(s{}), "")
+		walker := NewFieldWalker(reflect.TypeOf(s{}), "")
 		count := 0
-		walker.WalkFields(func(fi fieldInfo) bool {
+		walker.WalkFields(func(fi FieldInfo) bool {
 			count++
 			return count < 2
 		})
@@ -89,7 +89,7 @@ func Test_fieldWalker_WalkFields(t *testing.T) {
 			B  string     // hides Eb.B
 			Ec
 		}
-		walker := newFieldWalker(reflect.TypeOf(T{}), "")
+		walker := NewFieldWalker(reflect.TypeOf(T{}), "")
 		check(t, walker, []want{
 			{"A", "A", []int{0}, ""},
 			{"B", "B", []int{2}, ""},
@@ -112,7 +112,7 @@ func Test_fieldWalker_WalkFields(t *testing.T) {
 			s int     `c:"V"` //lint:ignore U1000 Test unexported fields.
 			B `c:"X"` // hides B.X, the traverse will not go into the field
 		}
-		walker := newFieldWalker(reflect.TypeOf(T{}), "c")
+		walker := NewFieldWalker(reflect.TypeOf(T{}), "c")
 		check(t, walker, []want{
 			{"B", "B", []int{2}, "X"},
 			{"A", "A.A", []int{0, 0}, ""},
@@ -120,15 +120,15 @@ func Test_fieldWalker_WalkFields(t *testing.T) {
 	})
 }
 
-func Test_fieldWalker_WalkValues(t *testing.T) {
+func TestFieldWalker_WalkValues(t *testing.T) {
 	type want struct {
 		Value int // 0 if the field isn't int.
 		Path  string
 	}
 
-	check := func(t *testing.T, walker *fieldWalker, val reflect.Value, ws []want) {
+	check := func(t *testing.T, walker *FieldWalker, val reflect.Value, ws []want) {
 		i := 0
-		walker.WalkValues(val, func(f fieldInfo, v reflect.Value) bool {
+		walker.WalkValues(val, func(f FieldInfo, v reflect.Value) bool {
 			if i > len(ws)-1 {
 				t.Errorf("too many fields, index: %d", i)
 			}
@@ -153,8 +153,8 @@ func Test_fieldWalker_WalkValues(t *testing.T) {
 
 	t.Run("nil", func(t *testing.T) {
 		var a *struct{}
-		walker := newFieldWalker(reflect.TypeOf(a), "")
-		walker.WalkValues(reflect.ValueOf(a), func(fi fieldInfo, v reflect.Value) bool {
+		walker := NewFieldWalker(reflect.TypeOf(a), "")
+		walker.WalkValues(reflect.ValueOf(a), func(fi FieldInfo, v reflect.Value) bool {
 			t.FailNow()
 			return true
 		})
@@ -162,10 +162,10 @@ func Test_fieldWalker_WalkValues(t *testing.T) {
 
 	t.Run("top1", func(t *testing.T) {
 		var a struct{ X, Y int }
-		walker := newFieldWalker(reflect.TypeOf(a), "")
+		walker := NewFieldWalker(reflect.TypeOf(a), "")
 
 		count := 0
-		walker.WalkValues(reflect.ValueOf(a), func(fi fieldInfo, v reflect.Value) bool {
+		walker.WalkValues(reflect.ValueOf(a), func(fi FieldInfo, v reflect.Value) bool {
 			count++
 			return count < 1
 		})
@@ -204,7 +204,7 @@ func Test_fieldWalker_WalkValues(t *testing.T) {
 			},
 		}
 
-		walker := newFieldWalker(reflect.TypeOf(c), "")
+		walker := NewFieldWalker(reflect.TypeOf(c), "")
 		check(t, walker, reflect.ValueOf(c), []want{
 			{1, "C1"},
 			{2, "C2"},

@@ -111,7 +111,7 @@ func (ix *simpleMatcher) MatchField(name string) (reflect.StructField, bool) {
 
 	name = ix.fixName(name)
 	if f, ok := ix.fs.Load(name); ok {
-		return f.(fieldInfo).StructField, ok
+		return f.(FieldInfo).StructField, ok
 	}
 	return reflect.StructField{}, false
 }
@@ -119,10 +119,10 @@ func (ix *simpleMatcher) MatchField(name string) (reflect.StructField, bool) {
 func (ix *simpleMatcher) initFieldMap() {
 	m := new(syncMap)
 
-	walker := newFieldWalker(ix.typ, ix.conf.Tag)
-	walker.WalkFields(func(fi fieldInfo) bool {
+	walker := NewFieldWalker(ix.typ, ix.conf.Tag)
+	walker.WalkFields(func(fi FieldInfo) bool {
 		// If a tag name is specified, use it; otherwise, use the raw field name.
-		name := fi.Tag
+		name := fi.TagValue
 		if name == "" {
 			name = fi.Name
 		}

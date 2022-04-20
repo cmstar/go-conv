@@ -451,10 +451,10 @@ func (c *Conv) StructToMap(v interface{}) (map[string]interface{}, error) {
 
 	src := reflect.ValueOf(v)
 	dst := reflect.MakeMap(reflect.TypeOf(map[string]interface{}(nil)))
-	walker := newFieldWalker(src.Type(), "") // TODO Tags on fields are not processed here.
+	walker := NewFieldWalker(src.Type(), "") // TODO Tags on fields are not processed here.
 
 	var err error
-	walker.WalkValues(src, func(fi fieldInfo, fieldValue reflect.Value) bool {
+	walker.WalkValues(src, func(fi FieldInfo, fieldValue reflect.Value) bool {
 		var ff reflect.Value
 		ff, err = c.convertToMapValue(fieldValue)
 
@@ -640,10 +640,10 @@ func (c *Conv) StructToStruct(src interface{}, dstTyp reflect.Type) (interface{}
 	mather := ctor.GetMatcher(dstTyp)
 	vSrc := reflect.ValueOf(src)
 	vDst := reflect.New(dstTyp).Elem()
-	walker := newFieldWalker(vSrc.Type(), "") // TODO Tags on fields are not processed here.
+	walker := NewFieldWalker(vSrc.Type(), "") // TODO Tags on fields are not processed here.
 
 	var err error
-	walker.WalkValues(vSrc, func(fi fieldInfo, fieldValue reflect.Value) bool {
+	walker.WalkValues(vSrc, func(fi FieldInfo, fieldValue reflect.Value) bool {
 		field, ok := mather.MatchField(fi.Name)
 		if !ok {
 			return true

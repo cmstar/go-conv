@@ -267,7 +267,7 @@ func Test_simpleMatcher_withEmbeddedStruct(t *testing.T) {
 			return false
 		}
 
-		got := v.(fieldInfo).Type
+		got := v.(FieldInfo).Type
 		if got != wantType {
 			t.Errorf("key %v, want type %v, got %v", key, wantType, got)
 			return false
