@@ -700,12 +700,12 @@ func (c *Conv) StructToStruct(src interface{}, dstTyp reflect.Type) (interface{}
 //	simple                 -> simple                  use Conv.SimpleToSimple()
 //	string                 -> []simple                use Conv.StringToSlice()
 //	map[string]interface{} -> struct                  use Conv.MapToStruct()
-//	map[any]any            -> map[any]any             use Conv.MapToMap()
-//	[]any                  -> []any                   use Conv.SliceToSlice()
+//	map[ANY]ANY            -> map[ANY]ANY             use Conv.MapToMap()
+//	[]ANY                  -> []ANY                   use Conv.SliceToSlice()
 //	struct                 -> map[string]interface{}  use Conv.StructToMap()
 //	struct                 -> struct                  use Conv.StructToStruct()
 //
-// 'any' generally can be any other type listed above. 'simple' is some type which IsSimpleType() returns true.
+// 'ANY' generally can be any other type listed above. 'simple' is some type which IsSimpleType() returns true.
 //
 // For pointers:
 // If the source value is a pointer, the value pointed to will be extracted and converted.
@@ -850,7 +850,7 @@ func (c *Conv) convertToNonPtr(src interface{}, dstTyp reflect.Type) (interface{
 	}
 
 	if srcKind == reflect.Map {
-		// map[string]any { "": value } -> ConvertType(value)
+		// map[string]ANY { "": value } -> ConvertType(value)
 		if underlyingValue := c.tryFlattenEmptyKeyMap(src); underlyingValue != nil {
 			return c.ConvertType(underlyingValue, dstTyp)
 		}
@@ -860,7 +860,7 @@ func (c *Conv) convertToNonPtr(src interface{}, dstTyp reflect.Type) (interface{
 		case reflect.Map:
 			return c.MapToMap(src, dstTyp)
 
-		// map[string]any -> struct
+		// map[string]ANY -> struct
 		case reflect.Struct:
 			mm, ok := src.(map[string]interface{})
 			if !ok {
@@ -885,7 +885,6 @@ func (c *Conv) convertToNonPtr(src interface{}, dstTyp reflect.Type) (interface{
 		case reflect.String:
 			return c.StringToSlice(src.(string), dstTyp)
 
-		// []any -> []any
 		case reflect.Slice:
 			return c.SliceToSlice(src, dstTyp)
 		}
