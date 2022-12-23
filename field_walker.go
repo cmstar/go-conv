@@ -16,45 +16,50 @@ var fieldWalkerCache syncMap
 //   - Fields of embedded struct, recursively.
 //
 // e.g. without tagName
-//   type Ec struct {
-//       D int
-//   }
-//   type Eb struct {
-//       B int // hided by T.B
-//       Ec    // hided by T.Ec.D
-//       C int
-//   }
-//   type T struct {
-//       A  int
-//       Eb
-//       B  string // hides Eb.B
-//       Ec
-//   }
+//
+//	type Ec struct {
+//	    D int
+//	}
+//	type Eb struct {
+//	    B int // hided by T.B
+//	    Ec    // hided by T.Ec.D
+//	    C int
+//	}
+//	type T struct {
+//	    A  int
+//	    Eb
+//	    B  string // hides Eb.B
+//	    Ec
+//	}
+//
 // The traverse order is:
-//   PATH     INDEX
-//   A        {0}
-//   B        {2}
-//   Eb.C     {1, 2}
-//   Ec.D     {3, 0}
+//
+//	PATH     INDEX
+//	A        {0}
+//	B        {2}
+//	Eb.C     {1, 2}
+//	Ec.D     {3, 0}
 //
 // e.g. with tagName="json"
-//   type A struct {
-//     A int
-//     X int  // hided by T.B
-//   }
-//   type B struct {
-//     B1 int // absent
-//     B2 int // absent
-//   }
-//   type T struct {
-//     A
-//     B `json:"X"` // hides B.X, the traverse will not go into the field
-//   }
-// The traverse order is:
-//   PATH     INDEX    TAG
-//   B        {1}      X
-//   A.A      {0, 0}
 //
+//	type A struct {
+//	  A int
+//	  X int  // hided by T.B
+//	}
+//	type B struct {
+//	  B1 int // absent
+//	  B2 int // absent
+//	}
+//	type T struct {
+//	  A
+//	  B `json:"X"` // hides B.X, the traverse will not go into the field
+//	}
+//
+// The traverse order is:
+//
+//	PATH     INDEX    TAG
+//	B        {1}      X
+//	A.A      {0, 0}
 type FieldWalker struct {
 	typ     reflect.Type
 	tagName string
@@ -67,7 +72,7 @@ type FieldInfo struct {
 	reflect.StructField
 
 	// If the field is a field of am embedded and untagged field which type is struct,
-	// the path is a dot-splitted string like A.B.C; otherwise it's equal to F.Name.
+	// the path is a dot-split string like A.B.C; otherwise it's equal to F.Name.
 	Path string
 
 	// The tag value of the field.
@@ -106,7 +111,6 @@ func (walker *FieldWalker) WalkFields(callback func(FieldInfo) bool) {
 //
 // If a struct is embedded as a pointer, and the value is nil, the field is ignored.
 // If the given value is nil, the traverse stops with no callback.
-//
 func (walker *FieldWalker) WalkValues(value reflect.Value, callback func(FieldInfo, reflect.Value) bool) {
 	if walker.fields == nil {
 		walker.initFields()
@@ -167,7 +171,7 @@ func (walker *FieldWalker) initFields() {
 
 	type fieldBuf struct {
 		Index []int        // If the current field is an embedded field, stores the field index sequence.
-		Path  string       // The field path, splitted by dots.
+		Path  string       // The field path, split by dots.
 		Type  reflect.Type // The type of the current field.
 	}
 

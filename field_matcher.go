@@ -157,15 +157,15 @@ func (ix *simpleMatcher) fixName(name string) string {
 }
 
 // fixCamelSnakeCaseName transforms first runes of each word to '_c' format, 'c' is the rune in lower-case. e.g.:
-//   aaBB   -> _aa_b_b
-//   AaBb   -> _aa_bb
-//   _a_b_  -> __a_b_
+//
+//	aaBB   -> _aa_b_b
+//	AaBb   -> _aa_bb
+//	_a_b_  -> __a_b_
 //
 // c is the first rune of a word if any of:
-// Case 1: The first rune of the name.
-// Case 2: An uppercase rune.
-// Case 3: A rune after a *single* underscore, and the underscore is not the first rune of a word.
-//
+//   - Case 1: The first rune of the name.
+//   - Case 2: An uppercase rune.
+//   - Case 3: A rune after a *single* underscore, and the underscore is not the first rune of a word.
 func (ix *simpleMatcher) fixCamelSnakeCaseName(name []rune) string {
 	var b strings.Builder
 	b.Grow(len(name))

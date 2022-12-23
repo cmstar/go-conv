@@ -105,13 +105,13 @@ func errSourceShouldNotBeNil(fnName string) error {
 // Panics on invalid parameters.
 //
 // e.g.
-//   type A struct { X, Y int }
-//   type B struct { *A }
-//   type C struct { B }
-//   type D struct { *C }
 //
-//   getFieldPath(reflect.TypeOf(D{}), []int{0, 0, 0, 1}) //-> C.B.A.Y
+//	type A struct { X, Y int }
+//	type B struct { *A }
+//	type C struct { B }
+//	type D struct { *C }
 //
+//	getFieldPath(reflect.TypeOf(D{}), []int{0, 0, 0, 1}) //-> C.B.A.Y
 func getFieldPath(typ reflect.Type, index []int) string {
 	var path string
 	for i := 0; i < len(index); i++ {
@@ -133,11 +133,10 @@ func getFieldPath(typ reflect.Type, index []int) string {
 // If the field is a field of an embedded pointer of a struct, and the pointer is nil, this function will try to
 // initialize the value of the embedded pointer with the zero value.
 //
-// If the embedded poiter cannot be initialized, returns an error.
+// If the embedded pointer cannot be initialized, returns an error.
 //
 // If the value is nil, or is not an *addressable* struct, or the index is out of range,
 // or the length of index is 0, the function panics.
-//
 func getFieldValue(val reflect.Value, index []int) (reflect.Value, error) {
 	ln := len(index)
 	if ln == 0 {

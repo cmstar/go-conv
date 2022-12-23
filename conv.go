@@ -9,19 +9,20 @@ import (
 
 // Conv provides a group of functions to convert between simple types, maps, slices and structs.
 // A pointer of a zero value is ready to use, it has the default behavior:
-//   new(Conv).ConvertType(...)
+//
+//	new(Conv).ConvertType(...)
 //
 // The field Config is used to customize the conversion behavior.
 // e.g., this Conv instance uses a built-in FieldMatcherCreator and a custom TimeToString function.
-//   c:= &Conv{
-//       Config: Config {
-//           FieldMatcherCreator: CaseInsensitiveFieldMatcherCreator(),
-//           TimeToString: func(t time.Time) (string, error) { return t.Format(time.RFC1123), nil },
-//       },
-//   }
+//
+//	c:= &Conv{
+//	    Config: Config {
+//	        FieldMatcherCreator: CaseInsensitiveFieldMatcherCreator(),
+//	        TimeToString: func(t time.Time) (string, error) { return t.Format(time.RFC1123), nil },
+//	    },
+//	}
 //
 // All functions are thread-safe and can be used concurrently.
-//
 type Conv struct {
 	// Conf is used to customize the conversion behavior.
 	Conf Config
@@ -100,7 +101,6 @@ func (c *Conv) doStringToTime(v string) (time.Time, error) {
 // The elements of the slice must be simple type, for which IsSimpleType() returns true.
 //
 // Conv.Config.StringSplitter() is used to split the string.
-//
 func (c *Conv) StringToSlice(v string, simpleSliceType reflect.Type) (interface{}, error) {
 	const fnName = "StringToSlice"
 
@@ -131,12 +131,11 @@ func (c *Conv) StringToSlice(v string, simpleSliceType reflect.Type) (interface{
 // The value must be simple, for which IsSimpleType() returns true.
 //
 // Rules:
-//   nil: as false.
-//   Numbers: zero as false, non-zero as true.
-//   String: same as strconv.ParseBool().
-//   time.Time: zero Unix timestamps as false, other values as true.
-//   Other values are not supported, returns false and an error.
-//
+//   - nil: as false.
+//   - Numbers: zero as false, non-zero as true.
+//   - String: same as strconv.ParseBool().
+//   - time.Time: zero Unix timestamps as false, other values as true.
+//   - Other values are not supported, returns false and an error.
 func (c *Conv) SimpleToBool(simple interface{}) (bool, error) {
 	const fnName = "SimpleToBool"
 
@@ -166,7 +165,6 @@ func (c *Conv) SimpleToBool(simple interface{}) (bool, error) {
 //
 // Conv.Config.StringToTime() is used to format times.
 // Specially, booleans are converted to 0/1, not the default format true/false.
-//
 func (c *Conv) SimpleToString(v interface{}) (string, error) {
 	const fnName = "SimpleToString"
 
@@ -196,18 +194,21 @@ SimpleToSimple converts a simple type, for which IsSimpleType() returns true, to
 The conversion use the following rules:
 
 Booleans:
-    - true/false is converted to number 0/1, or string '0'/'1'.
-	- From a boolean to a string: use strconv.ParseBool().
-	- From a number to a boolean: zero value as false; non-zero value as true.
+  - true/false is converted to number 0/1, or string '0'/'1'.
+  - From a boolean to a string: use strconv.ParseBool().
+  - From a number to a boolean: zero value as false; non-zero value as true.
+
 Numbers:
-    - From a complex number to a real number: the imaginary part must be zero, the real part will be converted.
+  - From a complex number to a real number: the imaginary part must be zero, the real part will be converted.
+
 To time.Time:
-    - From a number: the number is treated as a Unix-timestamp as converted using time.Unix(),  the time zone is time.Local.
-    - From a string: use Conv.Conf.StringToTime function.
-    - From another time.Time: the raw value is cloned, includes the timestamp and the location.
+  - From a number: the number is treated as a Unix-timestamp as converted using time.Unix(),  the time zone is time.Local.
+  - From a string: use Conv.Conf.StringToTime function.
+  - From another time.Time: the raw value is cloned, includes the timestamp and the location.
+
 From time.Time:
-    - To a number: output a Unix-timestamp.
-	- To a string: use Conv.Conf.TimeToString function.
+  - To a number: output a Unix-timestamp.
+  - To a string: use Conv.Conf.TimeToString function.
 */
 func (c *Conv) SimpleToSimple(src interface{}, dstTyp reflect.Type) (interface{}, error) {
 	const fnName = "SimpleToSimple"
@@ -296,7 +297,6 @@ func (c *Conv) simpleToPrimitive(src interface{}, dstKind reflect.Kind) (interfa
 // Each element will be converted using Conv.ConvertType() .
 // A nil slice will be converted to a nil slice of the destination type.
 // If the source value is nil interface{}, returns nil and an error.
-//
 func (c *Conv) SliceToSlice(src interface{}, dstSliceTyp reflect.Type) (interface{}, error) {
 	const fnName = "SliceToSlice"
 
@@ -339,7 +339,6 @@ func (c *Conv) SliceToSlice(src interface{}, dstSliceTyp reflect.Type) (interfac
 // MapToStruct converts a map[string]interface{} to a struct.
 //
 // Each exported field of the struct is indexed using Conv.Config.FieldMatcherCreator().
-//
 func (c *Conv) MapToStruct(m map[string]interface{}, dstTyp reflect.Type) (interface{}, error) {
 	const fnName = "MapToStruct"
 
@@ -394,7 +393,6 @@ func (c *Conv) fieldMatcherCreator() FieldMatcherCreator {
 // If the source value is nil, the function returns a nil map of the destination type without any error.
 //
 // All keys and values in the map are converted using Conv.ConvertType() .
-//
 func (c *Conv) MapToMap(m interface{}, typ reflect.Type) (interface{}, error) {
 	const fnName = "MapToMap"
 
@@ -438,21 +436,26 @@ func (c *Conv) MapToMap(m interface{}, typ reflect.Type) (interface{}, error) {
 // StructToMap is partially like json.Unmarshal(json.Marshal(v), &someMap) . It converts a struct to map[string]interface{} .
 //
 // Each value of exported field will be processed recursively with an internal function f() , which:
-//  - Simple types, for which IsSimpleType() returns true:
-//    - A type whose kind is primitive, will be converted to a primitive value.
-//    - For other types, the value will be cloned into the map directly.
-//  - Slices:
-//    - A nil slice is converted to a nil slice; an empty slice is converted to an empty slice with cap=0.
-//    - A non-empty slice is converted to another slice, each element is process with f() , all elements must be the same type.
-//  - Maps:
-//    - A nil map are converted to nil of map[string]interface{} .
-//    - A non-nil map is converted to map[string]interface{} , keys are processed with Conv.ConvertType() , values with f() .
-//  - Structs are converted to map[string]interface{} using Conv.StructToMap() recursively.
-//  - Pointers:
-//    - Nils are ignored.
-//    - Non-nil values pointed to are converted with f() .
-// Other types not listed above are not supported and will result in an error.
 //
+// Simple types, for which IsSimpleType() returns true:
+//   - A type whose kind is primitive, will be converted to a primitive value.
+//   - For other types, the value will be cloned into the map directly.
+//
+// Slices:
+//   - A nil slice is converted to a nil slice; an empty slice is converted to an empty slice with cap=0.
+//   - A non-empty slice is converted to another slice, each element is process with f() , all elements must be the same type.
+//
+// Maps:
+//   - A nil map are converted to nil of map[string]interface{} .
+//   - A non-nil map is converted to map[string]interface{} , keys are processed with Conv.ConvertType() , values with f() .
+//
+// Structs are converted to map[string]interface{} using Conv.StructToMap() recursively.
+//
+// Pointers:
+//   - Nils are ignored.
+//   - Non-nil values pointed to are converted with f() .
+//
+// Other types not listed above are not supported and will result in an error.
 func (c *Conv) StructToMap(v interface{}) (map[string]interface{}, error) {
 	const fnName = "StructToMap"
 
@@ -634,7 +637,6 @@ func (c *Conv) determineSliceTypeForMapValue(srcSliceType reflect.Type) (dstSlic
 // The field values are converted using Conv.ConvertType() .
 //
 // This function can be used to deep-clone a struct.
-//
 func (c *Conv) StructToStruct(src interface{}, dstTyp reflect.Type) (interface{}, error) {
 	const fnName = "StructToStruct"
 
@@ -694,13 +696,15 @@ func (c *Conv) StructToStruct(src interface{}, dstTyp reflect.Type) (interface{}
 // ConvertType is the core function of Conv . It converts the given value to the destination type.
 //
 // Currently, these conversions are supported:
-//   simple                 -> simple                  use Conv.SimpleToSimple()
-//   string                 -> []simple                use Conv.StringToSlice()
-//   map[string]interface{} -> struct                  use Conv.MapToStruct()
-//   map[any]any            -> map[any]any             use Conv.MapToMap()
-//   []any                  -> []any                   use Conv.SliceToSlice()
-//   struct                 -> map[string]interface{}  use Conv.StructToMap()
-//   struct                 -> struct                  use Conv.StructToStruct()
+//
+//	simple                 -> simple                  use Conv.SimpleToSimple()
+//	string                 -> []simple                use Conv.StringToSlice()
+//	map[string]interface{} -> struct                  use Conv.MapToStruct()
+//	map[any]any            -> map[any]any             use Conv.MapToMap()
+//	[]any                  -> []any                   use Conv.SliceToSlice()
+//	struct                 -> map[string]interface{}  use Conv.StructToMap()
+//	struct                 -> struct                  use Conv.StructToStruct()
+//
 // 'any' generally can be any other type listed above. 'simple' is some type which IsSimpleType() returns true.
 //
 // For pointers:
@@ -708,12 +712,12 @@ func (c *Conv) StructToStruct(src interface{}, dstTyp reflect.Type) (interface{}
 // The destination type can be a type of pointer, the source value which is nil will be converted to a nil pointer.
 //
 // This function can be used to deep-clone a struct, e.g.:
-//   clone, err := ConvertType(src, reflect.TypeOf(src))
+//
+//	clone, err := ConvertType(src, reflect.TypeOf(src))
 //
 // There is a special conversion that can convert a map[string]interface{} to some other type listed above, when
 // the map has only one key and the key is an empty string, the conversion is performed over the value other than
 // the map itself. This is a special contract for some particular situation, when some code is working on maps only.
-//
 func (c *Conv) ConvertType(src interface{}, dstTyp reflect.Type) (interface{}, error) {
 	const fnName = "ConvertType"
 
@@ -761,7 +765,6 @@ func (c *Conv) ConvertType(src interface{}, dstTyp reflect.Type) (interface{}, e
 // If the source value is nil, the function returns without an error, the underlying value
 // of the pointer will not be set.
 // If dst is not a pointer, the function panics an error.
-//
 func (c *Conv) Convert(src interface{}, dstPtr interface{}) error {
 	const fnName = "Convert"
 
@@ -895,11 +898,11 @@ func (c *Conv) convertToNonPtr(src interface{}, dstTyp reflect.Type) (interface{
 //   - the map is map[string]interface{}
 //   - the map has only one key
 //   - the key is an empty string
-// the function returns the value of the key; otherwise it returns nil.
+//
+// The function returns the value of the key; otherwise it returns nil.
 //
 // Such map is a special contract, it's used when converting a map to a simple type.
 // e.g., map[string]int{"": 123} can be converted to 123 .
-//
 func (c *Conv) tryFlattenEmptyKeyMap(v interface{}) interface{} {
 	m, ok := v.(map[string]interface{})
 	if !ok || len(m) != 1 {
