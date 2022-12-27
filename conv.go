@@ -707,6 +707,8 @@ func (c *Conv) StructToStruct(src interface{}, dstTyp reflect.Type) (interface{}
 //
 // 'ANY' generally can be any other type listed above. 'simple' is some type which IsSimpleType() returns true.
 //
+// If the destination type is the type of the empty interface, the function returns src directly without any error.
+//
 // For pointers:
 // If the source value is a pointer, the value pointed to will be extracted and converted.
 // The destination type can be a type of pointer, the source value which is nil will be converted to a nil pointer.
@@ -720,6 +722,10 @@ func (c *Conv) StructToStruct(src interface{}, dstTyp reflect.Type) (interface{}
 // the map itself. This is a special contract for some particular situation, when some code is working on maps only.
 func (c *Conv) ConvertType(src interface{}, dstTyp reflect.Type) (interface{}, error) {
 	const fnName = "ConvertType"
+
+	if dstTyp == typEmptyInterface {
+		return src, nil
+	}
 
 	// Convert nils to nil pointers.
 	if src == nil && dstTyp.Kind() == reflect.Ptr {

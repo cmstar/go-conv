@@ -321,6 +321,7 @@ func TestConv_SliceToSlice(t *testing.T) {
 		{"string-bool", args{[]string{"true", "1", "0"}, reflect.TypeOf([]bool{})}, []bool{true, true, false}, ""},
 		{"bool-string", args{[]bool{true, true, false}, reflect.TypeOf([]string{})}, []string{"1", "1", "0"}, ""},
 		{"nil-nil", args{nilI, reflect.TypeOf([]struct{}{})}, nilStruct, ""},
+		{"interface-interface", args{[]interface{}{1, "v"}, reflect.TypeOf([]interface{}{})}, []interface{}{1, "v"}, ""},
 
 		{"err", args{[]struct{}{{}}, reflect.TypeOf([]string{})}, nil, "^conv.SliceToSlice: .+, at index 0.+"},
 		{"err-nil", args{nil, reflect.TypeOf([]string{})}, nil, "should not be nil"},
@@ -629,6 +630,20 @@ func TestConv_MapToMap(t *testing.T) {
 				1:  "11",
 				2:  "22",
 				33: "3",
+			},
+			"",
+		},
+
+		{
+			"[]interface-interface",
+			args{
+				map[string]interface{}{
+					"1": []interface{}{1, 2, 3},
+				},
+				reflect.TypeOf(map[interface{}]interface{}(nil)),
+			},
+			map[interface{}]interface{}{
+				"1": []interface{}{1, 2, 3},
 			},
 			"",
 		},
@@ -1485,6 +1500,17 @@ func TestConv_ConvertType(t *testing.T) {
 			},
 			nil,
 			`^conv.ConvertType: .+the map must be map\[string\]interface\{\}, got map\[float32\]interface.?\{\}$`,
+		},
+
+		// to empty interface
+		{
+			"empty-interface",
+			args{
+				[]int{1, 2, 3},
+				typEmptyInterface,
+			},
+			[]int{1, 2, 3},
+			"",
 		},
 	}
 	for _, tt := range tests {

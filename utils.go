@@ -21,6 +21,9 @@ var (
 
 	// The type of map used when converting between structs and maps.
 	typStringMap = reflect.TypeOf(map[string]interface{}(nil))
+
+	// The type of the empty interface.
+	typEmptyInterface = reflect.TypeOf((*interface{})(nil)).Elem()
 )
 
 func init() {
