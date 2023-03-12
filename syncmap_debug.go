@@ -14,8 +14,7 @@ Add build -tags=debug to enable this.
 // The zero value is ready for use. It must not be copied after first use.
 //
 // The thread-safe implementation is simply based on a sync.RWMutex. It doesn't
-// support some features such as netsted Range() - which will cause a dead lock.
-//
+// support some features such as nested Range() - which will cause a dead lock.
 type syncMap struct {
 	mu   sync.RWMutex
 	data map[any]any
