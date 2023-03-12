@@ -4,6 +4,8 @@
 [![Go](https://github.com/cmstar/go-conv/workflows/Go/badge.svg)](https://github.com/cmstar/go-conv/actions?query=workflow%3AGo)
 [![codecov](https://codecov.io/gh/cmstar/go-conv/branch/master/graph/badge.svg)](https://codecov.io/gh/cmstar/go-conv)
 [![License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](https://opensource.org/licenses/MIT)
+[![GoVersion](https://img.shields.io/github/go-mod/go-version/cmstar/go-conv)](https://github.com/cmstar/go-conv/blob/main/go.mod)
+[![Go Report Card](https://goreportcard.com/badge/github.com/cmstar/go-conv)](https://goreportcard.com/report/github.com/cmstar/go-conv)
 
 Features:
 
