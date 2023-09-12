@@ -1597,6 +1597,73 @@ func TestConv_Convert_ptr(t *testing.T) {
 	})
 }
 
+func TestConv_withCustomConverters(t *testing.T) {
+	type Name struct{ FirstName, LastName string }
+
+	nameConverter := func(value interface{}, nonPtrType reflect.Type) (result interface{}, err error) {
+		if nonPtrType != reflect.TypeOf(Name{}) {
+			return nil, nil
+		}
+
+		s, err := String(value)
+		if err != nil {
+			return nil, err
+		}
+
+		parts := strings.Split(s, " ")
+		if len(parts) != 2 {
+			return nil, errors.New("bad name")
+		}
+
+		return Name{parts[0], parts[1]}, nil
+	}
+
+	c := &Conv{
+		Conf: Config{
+			CustomConverters: []ConvertFunc{nameConverter},
+		},
+	}
+
+	t.Run("name", func(t *testing.T) {
+		var got Name
+		err := c.Convert("John Doe", &got)
+		if err != nil {
+			t.Errorf("got error %s", err)
+		}
+
+		want := Name{"John", "Doe"}
+		if got != want {
+			t.Errorf("want %v, got %v", want, got)
+		}
+	})
+
+	t.Run("error", func(t *testing.T) {
+		var got Name
+		err := c.Convert("John X Doe", &got)
+		if err == nil {
+			t.Errorf("want error")
+		}
+
+		want := "conv.Convert: bad name"
+		if err.Error() != want {
+			t.Errorf("want error %s, got %s", want, err)
+		}
+	})
+
+	t.Run("default", func(t *testing.T) {
+		var got string
+		err := c.Convert("John Doe", &got)
+		if err != nil {
+			t.Errorf("got error %s", err)
+		}
+
+		want := "John Doe"
+		if got != want {
+			t.Errorf("want %v, got %v", want, got)
+		}
+	})
+}
+
 func TestConv_tryFlattenEmptyKeyMap(t *testing.T) {
 	c := &Conv{}
 

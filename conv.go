@@ -31,7 +31,7 @@ type Conv struct {
 // Config is used to customize the conversion behavior of Conv .
 type Config struct {
 	// StringSplitter is the function used to split the string into elements of the slice when converting a string to a slice.
-	// It is called internally by Convert, ConvertType or other functions.
+	// It is called internally by Convert(), ConvertType() or other functions.
 	// Set this field if customization of the conversion is needed.
 	// If this field is nil, the value will not be split.
 	StringSplitter func(v string) []string
@@ -47,11 +47,27 @@ type Config struct {
 	//
 	// If FieldMatcherCreator is nil, SimpleMatcherCreator() will be used. There are some predefined implementations,
 	// such as CaseInsensitiveFieldMatcherCreator(), CamelSnakeCaseFieldMatcherCreator().
-	//
 	FieldMatcherCreator FieldMatcherCreator
 
+	// CustomConverters provides a group of functions for converting the given value to some specific type.
+	// The target type will never be nil and never be a pointer type.
+	//
+	// These functions are used to customize the conversion.
+	// It is only used by Convert() or ConvertType(), not works in other functions.
+	//
+	// When a conversion starts, it will firstly go through each function in this slice:
+	//   - The conversion stops immediately when some function returns a non-nil result or an error.
+	//     Convert() or ConvertType() will use the result or returns the error directly.
+	//   - The conversion runs next function in the slice if the previous one return nil with no error.
+	//   - If no function in the slice returns OK, the conversion will continue with the predefined implementations,
+	//     such as MapToMap(), StructToMap(), etc.
+	//
+	// NOTE: If your ConvertFunc use Conv internally, be carefully if there will be a death loop. Is it suggested to
+	// use a Conv instance with no ConvertFunc for the internal conversions.
+	CustomConverters []ConvertFunc
+
 	// TimeToString formats the given time.
-	// It is called internally by Convert, ConvertType or other functions.
+	// It is called internally by Convert(), ConvertType() or other functions.
 	// Set this field if it is needed to customize the procedure.
 	// If this field is nil, the function DefaultTimeToString() will be used.
 	TimeToString func(t time.Time) (string, error)
@@ -62,6 +78,9 @@ type Config struct {
 	// If this field is nil, the function DefaultStringToTime() will be used.
 	StringToTime func(v string) (time.Time, error)
 }
+
+// ConvertFunc is used to customize the conversion.
+type ConvertFunc func(value interface{}, nonPtrType reflect.Type) (result interface{}, err error)
 
 // DefaultTimeToString formats time using the time.RFC3339 format.
 func DefaultTimeToString(t time.Time) (string, error) {
@@ -840,6 +859,13 @@ func (c *Conv) getUnderlyingValue(v interface{}) interface{} {
 
 func (c *Conv) convertToNonPtr(src interface{}, dstTyp reflect.Type) (interface{}, error) {
 	src = c.getUnderlyingValue(src)
+
+	for _, f := range c.Conf.CustomConverters {
+		res, err := f(src, dstTyp)
+		if res != nil || err != nil {
+			return res, err
+		}
+	}
 
 	dstKind := dstTyp.Kind()
 	if src == nil {
