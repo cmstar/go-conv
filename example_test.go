@@ -2,6 +2,7 @@ package conv_test
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -174,4 +175,51 @@ func Example_theConvInstance() {
 	// [1 2 3] <nil>
 	// {Name:Bob MailAddr:bob@example.org Age:51 IsVip:true}
 	// {Name:Alice MailAddr:alice@example.org Age:27 IsVip:true}
+}
+
+func Example_customConverters() {
+	// We can use conv.ConvertFunc to convert values to some type of your own.
+
+	type Name struct{ FirstName, LastName string }
+
+	// Converts "A B" to Name{A, B}.
+	nameConverter := func(value interface{}, nonPtrType reflect.Type) (result interface{}, err error) {
+		if nonPtrType != reflect.TypeOf(Name{}) {
+			return nil, nil
+		}
+
+		s, err := conv.String(value)
+		if err != nil {
+			return nil, err
+		}
+
+		parts := strings.Split(s, " ")
+		if len(parts) != 2 {
+			return nil, errors.New("bad name")
+		}
+
+		return Name{parts[0], parts[1]}, nil
+	}
+
+	c := &conv.Conv{
+		Conf: conv.Config{
+			CustomConverters: []conv.ConvertFunc{nameConverter},
+		},
+	}
+
+	var name Name
+	c.Convert("John Doe", &name)
+	fmt.Println("FirstName:", name.FirstName)
+	fmt.Println("LastName:", name.LastName)
+
+	// The middle name is not supported so we'll get an error here.
+	fmt.Println("error:")
+	_, err := c.ConvertType("John Middle Doe", reflect.TypeOf(Name{}))
+	fmt.Println(err)
+
+	// Output:
+	// FirstName: John
+	// LastName: Doe
+	// error:
+	// conv.ConvertType: bad name
 }
