@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// The alias of the empty interface. Go 1.18 defines this but in earlier versions we can't use it.
+//lint:ignore U1000 The alias of the empty interface. Go 1.18 defines this but in earlier versions we can't use it.
 type any = interface{}
 
 var (
