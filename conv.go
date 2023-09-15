@@ -50,7 +50,7 @@ type Config struct {
 	FieldMatcherCreator FieldMatcherCreator
 
 	// CustomConverters provides a group of functions for converting the given value to some specific type.
-	// The target type will never be nil and never be a pointer type.
+	// The target type will never be nil.
 	//
 	// These functions are used to customize the conversion.
 	// It is only used by Convert() or ConvertType(), not works in other functions.
@@ -62,7 +62,7 @@ type Config struct {
 	//   - If no function in the slice returns OK, the conversion will continue with the predefined implementations,
 	//     such as MapToMap(), StructToMap(), etc.
 	//
-	// NOTE: If your ConvertFunc use Conv internally, be carefully if there will be a death loop. Is it suggested to
+	// NOTE: If your ConvertFunc use Conv internally, be carefully if there will be infinity loops. Is it suggested to
 	// use a Conv instance with no ConvertFunc for the internal conversions.
 	CustomConverters []ConvertFunc
 
@@ -80,7 +80,7 @@ type Config struct {
 }
 
 // ConvertFunc is used to customize the conversion.
-type ConvertFunc func(value interface{}, nonPtrType reflect.Type) (result interface{}, err error)
+type ConvertFunc func(value interface{}, typ reflect.Type) (result interface{}, err error)
 
 // DefaultTimeToString formats time using the time.RFC3339 format.
 func DefaultTimeToString(t time.Time) (string, error) {
@@ -751,6 +751,18 @@ func (c *Conv) ConvertType(src interface{}, dstTyp reflect.Type) (interface{}, e
 		return reflect.Zero(dstTyp).Interface(), nil
 	}
 
+	// CustomConverters
+	for i, f := range c.Conf.CustomConverters {
+		res, err := f(src, dstTyp)
+		if err != nil {
+			return nil, errForFunction(fnName, "converter[%d]: %s", i, err.Error())
+		}
+
+		if res != nil {
+			return res, nil
+		}
+	}
+
 	// Try to get the underlying type from a pointer type.
 	// It may be a pointer to another pointer, we should count the depth.
 	ptrDepth := 0
@@ -806,6 +818,23 @@ func (c *Conv) Convert(src interface{}, dstPtr interface{}) error {
 		return nil
 	}
 
+	// CustomConverters
+	for i, f := range c.Conf.CustomConverters {
+		if dstValue.Kind() == reflect.Ptr {
+			dstValue = dstValue.Elem()
+		}
+
+		res, err := f(src, dstValue.Type())
+		if err != nil {
+			return errForFunction(fnName, "converter[%d]: %s", i, err.Error())
+		}
+
+		if res != nil {
+			dstValue.Set(reflect.ValueOf(res))
+			return nil
+		}
+	}
+
 	for dstValue.Kind() == reflect.Ptr {
 		dstValue = dstValue.Elem()
 	}
@@ -859,13 +888,6 @@ func (c *Conv) getUnderlyingValue(v interface{}) interface{} {
 
 func (c *Conv) convertToNonPtr(src interface{}, dstTyp reflect.Type) (interface{}, error) {
 	src = c.getUnderlyingValue(src)
-
-	for _, f := range c.Conf.CustomConverters {
-		res, err := f(src, dstTyp)
-		if res != nil || err != nil {
-			return res, err
-		}
-	}
 
 	dstKind := dstTyp.Kind()
 	if src == nil {

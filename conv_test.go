@@ -1599,15 +1599,18 @@ func TestConv_Convert_ptr(t *testing.T) {
 
 func TestConv_withCustomConverters(t *testing.T) {
 	type Name struct{ FirstName, LastName string }
+	namePtrTyp := reflect.TypeOf(&Name{})
+	nameTyp := namePtrTyp.Elem()
 
-	nameConverter := func(value interface{}, nonPtrType reflect.Type) (result interface{}, err error) {
-		if nonPtrType != reflect.TypeOf(Name{}) {
+	//  "A B" -> Name{A, B}.
+	nameStructConverter := func(value interface{}, typ reflect.Type) (result interface{}, err error) {
+		if typ != nameTyp {
 			return nil, nil
 		}
 
-		s, err := String(value)
-		if err != nil {
-			return nil, err
+		s, ok := value.(string)
+		if !ok {
+			return nil, nil
 		}
 
 		parts := strings.Split(s, " ")
@@ -1618,13 +1621,38 @@ func TestConv_withCustomConverters(t *testing.T) {
 		return Name{parts[0], parts[1]}, nil
 	}
 
+	// string/Name/*Name -> *Name.
+	namePointerConverter := func(value interface{}, typ reflect.Type) (result interface{}, err error) {
+		if typ != namePtrTyp {
+			return nil, nil
+		}
+
+		if _, ok := value.(string); ok {
+			n, err := nameStructConverter(value, nameTyp)
+			if err != nil {
+				return nil, err
+			}
+			return &n, nil
+		}
+
+		if v, ok := value.(Name); ok {
+			return &Name{v.FirstName, v.LastName}, nil
+		}
+
+		if v, ok := value.(*Name); ok {
+			return &Name{v.FirstName, v.LastName}, nil
+		}
+
+		return nil, nil
+	}
+
 	c := &Conv{
 		Conf: Config{
-			CustomConverters: []ConvertFunc{nameConverter},
+			CustomConverters: []ConvertFunc{nameStructConverter, namePointerConverter},
 		},
 	}
 
-	t.Run("name", func(t *testing.T) {
+	t.Run("StringToName", func(t *testing.T) {
 		var got Name
 		err := c.Convert("John Doe", &got)
 		if err != nil {
@@ -1637,6 +1665,19 @@ func TestConv_withCustomConverters(t *testing.T) {
 		}
 	})
 
+	t.Run("NameToNamePtr", func(t *testing.T) {
+		got, err := c.ConvertType(Name{"John", "Doe"}, reflect.TypeOf(&Name{}))
+		if err != nil {
+			t.Errorf("got error %s", err)
+		}
+
+		n := got.(*Name)
+		want := &Name{"John", "Doe"}
+		if n.FirstName != want.FirstName || n.LastName != want.LastName {
+			t.Errorf("want %v, got %v", want, got)
+		}
+	})
+
 	t.Run("error", func(t *testing.T) {
 		var got Name
 		err := c.Convert("John X Doe", &got)
@@ -1644,7 +1685,7 @@ func TestConv_withCustomConverters(t *testing.T) {
 			t.Errorf("want error")
 		}
 
-		want := "conv.Convert: bad name"
+		want := "conv.Convert: converter[0]: bad name"
 		if err.Error() != want {
 			t.Errorf("want error %s, got %s", want, err)
 		}

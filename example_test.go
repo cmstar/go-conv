@@ -182,15 +182,15 @@ func Example_customConverters() {
 
 	type Name struct{ FirstName, LastName string }
 
-	// Converts "A B" to Name{A, B}.
-	nameConverter := func(value interface{}, nonPtrType reflect.Type) (result interface{}, err error) {
-		if nonPtrType != reflect.TypeOf(Name{}) {
+	// Converts a string such as "A B" to a struct Name{A, B}.
+	nameConverter := func(value interface{}, typ reflect.Type) (result interface{}, err error) {
+		if typ != reflect.TypeOf(Name{}) {
 			return nil, nil
 		}
 
-		s, err := conv.String(value)
-		if err != nil {
-			return nil, err
+		s, ok := value.(string)
+		if !ok {
+			return nil, nil
 		}
 
 		parts := strings.Split(s, " ")
@@ -221,5 +221,5 @@ func Example_customConverters() {
 	// FirstName: John
 	// LastName: Doe
 	// error:
-	// conv.ConvertType: bad name
+	// conv.ConvertType: converter[0]: bad name
 }
