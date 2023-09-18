@@ -1568,6 +1568,23 @@ func TestConv_Convert_panic(t *testing.T) {
 		var p *int
 		_defaultConv.Convert("", p)
 	})
+
+	t.Run("ptr-to-nil-ptr", func(t *testing.T) {
+		defer func() {
+			var err interface{}
+			if err = recover(); err == nil {
+				t.Fatalf("should panic an error")
+			}
+
+			const wantMsg = "conv.Convert: the underlying pointer must be initialized"
+			if err.(error).Error() != wantMsg {
+				t.Fatalf("should panic an error with message: '%v', got '%v'", wantMsg, err)
+			}
+		}()
+
+		var p *int
+		_defaultConv.Convert("", &p)
+	})
 }
 
 func TestConv_Convert_ptr(t *testing.T) {

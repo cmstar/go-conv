@@ -837,6 +837,9 @@ func (c *Conv) Convert(src interface{}, dstPtr interface{}) error {
 
 	for dstValue.Kind() == reflect.Ptr {
 		dstValue = dstValue.Elem()
+		if dstValue.Kind() == reflect.Invalid {
+			panic(errForFunction(fnName, "the underlying pointer must be initialized"))
+		}
 	}
 
 	dstTyp := dstValue.Type()
