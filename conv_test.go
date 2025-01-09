@@ -383,12 +383,13 @@ func TestConv_MapToStruct(t *testing.T) {
 			S     FromString
 			I     int
 			F     float64
+			E     interface{}
 			inner int
 		}
 
 		check(t, args{
 			c:        _defaultConv,
-			m:        map[string]interface{}{"I": 1, "F": 3.14, "S": "vv", "inner": 1},
+			m:        map[string]interface{}{"I": 1, "F": 3.14, "S": "vv", "inner": 1, "E": nil},
 			dstTyp:   reflect.TypeOf(T{}),
 			want:     T{I: 1, F: 3.14, S: "vv", inner: 0},
 			errRegex: "",
@@ -400,11 +401,12 @@ func TestConv_MapToStruct(t *testing.T) {
 			S FromString
 			I int
 			F float64
+			E interface{}
 		}
 
 		check(t, args{
 			c:        _defaultConv,
-			m:        map[string]interface{}{"I2": 1, "F2": 3.14, "S2": "vv"},
+			m:        map[string]interface{}{"I2": 1, "F2": 3.14, "S2": "vv", "E2": nil},
 			dstTyp:   reflect.TypeOf(T{}),
 			want:     T{},
 			errRegex: "",
@@ -1089,6 +1091,7 @@ func TestConv_StructToStruct(t *testing.T) {
 			Str   FromString
 			Int   int
 			Flt   float64
+			Empty interface{}
 			inner int
 		}
 

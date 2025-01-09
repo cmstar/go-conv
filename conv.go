@@ -394,6 +394,10 @@ func (c *Conv) MapToStruct(m map[string]interface{}, dstTyp reflect.Type) (inter
 			return nil, errForFunction(fnName, "error on converting field '%v': %v", field.Name, err.Error())
 		}
 
+		if vf == nil {
+			continue
+		}
+
 		fieldValue.Set(reflect.ValueOf(vf))
 	}
 
@@ -702,7 +706,10 @@ func (c *Conv) StructToStruct(src interface{}, dstTyp reflect.Type) (interface{}
 			return false
 		}
 
-		vField.Set(reflect.ValueOf(dstValue))
+		if dstValue != nil {
+			vField.Set(reflect.ValueOf(dstValue))
+		}
+
 		return true
 	})
 
