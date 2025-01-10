@@ -1,5 +1,6 @@
 # Hidden objects
 .*
 
+# Temporary files
 /tmp
-tmp_example_test.go
+tmp_*.go
