@@ -93,18 +93,27 @@ func (c primitiveConv) toString(v interface{}) string {
 	case string:
 		return vv
 
+	// By default fmt.Sprint() will convert float numbers to scientific notation when the number is large.
+	// e.g., fmt.Sprint(1234567890123.456) will result in "1.234567890123456e+12".
+	// To increase compatibility, we convert float numbers to string using strconv.FormatFloat().
+	case float64:
+		return strconv.FormatFloat(vv, 'f', -1, 64)
+
+	case float32:
+		return strconv.FormatFloat(float64(vv), 'f', -1, 32)
+
 	case complex64:
 		// Ignore the imaginary part of a complex number when it is zero, thus the value can be converted
 		// to some other real number.
 		// e.g., When converting (3+0i) to int, it is converted to "3" then converted to 3. If convert directly
 		// from "(3+0i)" to int, it will result in an error.
 		if imag(vv) == 0 {
-			return fmt.Sprint(real(vv))
+			return c.toString(real(vv))
 		}
 
 	case complex128:
 		if imag(vv) == 0 {
-			return fmt.Sprint(real(vv))
+			return c.toString(real(vv))
 		}
 	}
 

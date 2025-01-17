@@ -164,7 +164,11 @@ func TestConv_SimpleToString(t *testing.T) {
 		{"true", false, args{true}, "1", false},
 		{"false", false, args{false}, "0", false},
 		{"int", false, args{-112334}, "-112334", false},
-		{"float", false, args{3.14}, "3.14", false},
+
+		{"float32", false, args{float32(3.14)}, "3.14", false},
+		{"float32-large", false, args{float32(11122233)}, "11122233", false},
+		{"float64-large", false, args{float64(111222333444.555)}, "111222333444.555", false},
+
 		{"string", false, args{"中"}, "中", false},
 		{"time0", false, args{time.Date(2020, 1, 20, 13, 6, 22, int(321*time.Millisecond), time.UTC)}, "2020-01-20T13:06:22Z", false},
 		{"time+5", false, args{time.Date(2020, 1, 20, 13, 6, 22, int(321*time.Millisecond), time.FixedZone("", 5*3600))}, "2020-01-20T13:06:22+05:00", false},

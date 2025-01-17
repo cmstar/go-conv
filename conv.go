@@ -219,6 +219,7 @@ Booleans:
 
 Numbers:
   - From a complex number to a real number: the imaginary part must be zero, the real part will be converted.
+  - From a float number to a string: avoid scientific notation using strconv.FormatFloat().
 
 To time.Time:
   - From a number: the number is treated as a Unix-timestamp as converted using time.Unix(),  the time zone is time.Local.
