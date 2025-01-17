@@ -124,12 +124,12 @@ func (c *Conv) StringToSlice(v string, simpleSliceType reflect.Type) (interface{
 	const fnName = "StringToSlice"
 
 	if simpleSliceType.Kind() != reflect.Slice {
-		return nil, errForFunction(fnName, "the destination type must be slice, got %v", simpleSliceType)
+		return nil, errForFunctionF(fnName, "the destination type must be slice, got %v", simpleSliceType)
 	}
 
 	elemTyp := simpleSliceType.Elem()
 	if !IsSimpleType(elemTyp) {
-		return nil, errForFunction(fnName, "cannot convert from string to %v, the element's type must be a simple type", simpleSliceType)
+		return nil, errForFunctionF(fnName, "cannot convert from string to %v, the element's type must be a simple type", simpleSliceType)
 	}
 
 	parts := c.doSplitString(v)
@@ -137,7 +137,7 @@ func (c *Conv) StringToSlice(v string, simpleSliceType reflect.Type) (interface{
 	for i, elemIn := range parts {
 		elemOut, err := c.SimpleToSimple(elemIn, elemTyp)
 		if err != nil {
-			return nil, errForFunction(fnName, "cannot convert to %v, at index %v: %v", simpleSliceType, i, err)
+			return nil, errForFunctionF(fnName, "cannot convert to %v, at index %v: %v", simpleSliceType, i, err)
 		}
 
 		dst = reflect.Append(dst, reflect.ValueOf(elemOut))
@@ -176,7 +176,7 @@ func (c *Conv) SimpleToBool(simple interface{}) (bool, error) {
 		return timestamp != 0, nil
 	}
 
-	return false, errForFunction(fnName, "cannot convert %v to bool", typ)
+	return false, errForFunctionF(fnName, "cannot convert %v to bool", typ)
 }
 
 // SimpleToString converts the given value to a string.
@@ -195,14 +195,14 @@ func (c *Conv) SimpleToString(v interface{}) (string, error) {
 	if t == typTime {
 		res, err := c.doTimeToString(v.(time.Time))
 		if err != nil {
-			return "", errForFunction(fnName, "%s", err)
+			return "", errForFunctionF(fnName, "%s", err)
 		}
 		return res, nil
 	}
 
 	k := t.Kind()
 	if !IsPrimitiveKind(k) {
-		return "", errForFunction(fnName, "cannot convert %v to a primitive value", k)
+		return "", errForFunctionF(fnName, "cannot convert %v to a primitive value", k)
 	}
 
 	return primitive.toString(v), nil
@@ -245,11 +245,11 @@ func (c *Conv) SimpleToSimple(src interface{}, dstTyp reflect.Type) (interface{}
 	} else if dstTyp.ConvertibleTo(typTime) {
 		res, err = c.simpleToTime(src)
 	} else {
-		return nil, errForFunction(fnName, "cannot convert from %T to %v", src, dstTyp)
+		return nil, errForFunctionF(fnName, "cannot convert from %T to %v", src, dstTyp)
 	}
 
 	if err != nil {
-		return nil, errForFunction(fnName, "%s", err)
+		return nil, errForFunctionF(fnName, "%s", err)
 	}
 
 	// Convert if necessary.
@@ -326,11 +326,11 @@ func (c *Conv) SliceToSlice(src interface{}, dstSliceTyp reflect.Type) (interfac
 
 	vSrcSlice := reflect.ValueOf(src)
 	if vSrcSlice.Kind() != reflect.Slice {
-		return nil, errForFunction(fnName, "src must be a slice, got %v", vSrcSlice.Kind())
+		return nil, errForFunctionF(fnName, "src must be a slice, got %v", vSrcSlice.Kind())
 	}
 
 	if dstSliceTyp.Kind() != reflect.Slice {
-		return nil, errForFunction(fnName, "the destination type must be slice, got %v", dstSliceTyp.Kind())
+		return nil, errForFunctionF(fnName, "the destination type must be slice, got %v", dstSliceTyp.Kind())
 	}
 
 	// A nil slice will be converted to a nil slice.
@@ -347,7 +347,7 @@ func (c *Conv) SliceToSlice(src interface{}, dstSliceTyp reflect.Type) (interfac
 		srcElem := vSrcElem.Interface()
 		vDstElem, err := c.ConvertType(srcElem, dstElemTyp)
 		if err != nil {
-			return nil, errForFunction(fnName, "cannot convert to %v, at index %v : %v", dstSliceTyp, i, err.Error())
+			return nil, errForFunctionF(fnName, "cannot convert to %v, at index %v : %v", dstSliceTyp, i, err.Error())
 		}
 
 		vDstSlice = reflect.Append(vDstSlice, reflect.ValueOf(vDstElem))
@@ -368,7 +368,7 @@ func (c *Conv) MapToStruct(m map[string]interface{}, dstTyp reflect.Type) (inter
 
 	k := dstTyp.Kind()
 	if k != reflect.Struct {
-		return nil, errForFunction(fnName, "the destination type must be struct, got %v", dstTyp)
+		return nil, errForFunctionF(fnName, "the destination type must be struct, got %v", dstTyp)
 	}
 
 	dst := reflect.New(dstTyp).Elem()
@@ -392,7 +392,7 @@ func (c *Conv) MapToStruct(m map[string]interface{}, dstTyp reflect.Type) (inter
 
 		vf, err := c.ConvertType(vm, field.Type)
 		if err != nil {
-			return nil, errForFunction(fnName, "error on converting field '%v': %v", field.Name, err.Error())
+			return nil, errForFunctionF(fnName, "error on converting field '%v': %v", field.Name, err.Error())
 		}
 
 		if vf == nil {
@@ -422,11 +422,11 @@ func (c *Conv) MapToMap(m interface{}, typ reflect.Type) (interface{}, error) {
 
 	src := reflect.ValueOf(m)
 	if src.Kind() != reflect.Map {
-		return nil, errForFunction(fnName, "the given value type must be a map, got %v", src.Kind())
+		return nil, errForFunctionF(fnName, "the given value type must be a map, got %v", src.Kind())
 	}
 
 	if typ.Kind() != reflect.Map {
-		return nil, errForFunction(fnName, "the destination type must be map, got %v", typ)
+		return nil, errForFunctionF(fnName, "the destination type must be map, got %v", typ)
 	}
 
 	if src.IsNil() {
@@ -442,13 +442,13 @@ func (c *Conv) MapToMap(m interface{}, typ reflect.Type) (interface{}, error) {
 		srcKey := iter.Key().Interface()
 		dstKey, err := c.ConvertType(srcKey, dstKeyType)
 		if err != nil {
-			return nil, errForFunction(fnName, "cannot covert key '%v' to %v: %v", srcKey, dstKeyType, err.Error())
+			return nil, errForFunctionF(fnName, "cannot covert key '%v' to %v: %v", srcKey, dstKeyType, err.Error())
 		}
 
 		srcVal := iter.Value().Interface()
 		dstVal, err := c.ConvertType(srcVal, dstValueType)
 		if err != nil {
-			return nil, errForFunction(fnName, "cannot covert value of key '%v' to %v: %v", srcKey, dstValueType, err.Error())
+			return nil, errForFunctionF(fnName, "cannot covert value of key '%v' to %v: %v", srcKey, dstValueType, err.Error())
 		}
 
 		dst.SetMapIndex(reflect.ValueOf(dstKey), reflect.ValueOf(dstVal))
@@ -489,7 +489,7 @@ func (c *Conv) StructToMap(v interface{}) (map[string]interface{}, error) {
 
 	srcTyp := reflect.TypeOf(v)
 	if srcTyp.Kind() != reflect.Struct {
-		return nil, errForFunction(fnName, "the given value must be a struct, got %v", srcTyp)
+		return nil, errForFunctionF(fnName, "the given value must be a struct, got %v", srcTyp)
 	}
 
 	src := reflect.ValueOf(v)
@@ -502,7 +502,7 @@ func (c *Conv) StructToMap(v interface{}) (map[string]interface{}, error) {
 		ff, err = c.convertToMapValue(fieldValue)
 
 		if err != nil {
-			err = errForFunction(fnName, "error on converting field %v: %v", fi.Name, err.Error())
+			err = errForFunctionF(fnName, "error on converting field %v: %v", fi.Name, err.Error())
 			return false
 		}
 
@@ -670,12 +670,12 @@ func (c *Conv) StructToStruct(src interface{}, dstTyp reflect.Type) (interface{}
 
 	dstKind := dstTyp.Kind()
 	if dstKind != reflect.Struct {
-		return nil, errForFunction(fnName, "the destination type must be struct, got %v", dstKind)
+		return nil, errForFunctionF(fnName, "the destination type must be struct, got %v", dstKind)
 	}
 
 	srcTyp := reflect.TypeOf(src)
 	if srcTyp.Kind() != reflect.Struct {
-		return nil, errForFunction(fnName, "the given value must be a struct, got %v", srcTyp)
+		return nil, errForFunctionF(fnName, "the given value must be a struct, got %v", srcTyp)
 	}
 
 	ctor := c.fieldMatcherCreator()
@@ -703,7 +703,7 @@ func (c *Conv) StructToStruct(src interface{}, dstTyp reflect.Type) (interface{}
 
 		dstValue, e := c.ConvertType(fieldValue.Interface(), vField.Type())
 		if e != nil {
-			err = errForFunction(fnName, "error on converting field %v: %v", field.Name, e.Error())
+			err = errForFunctionF(fnName, "error on converting field %v: %v", field.Name, e.Error())
 			return false
 		}
 
@@ -763,7 +763,7 @@ func (c *Conv) ConvertType(src interface{}, dstTyp reflect.Type) (interface{}, e
 	for i, f := range c.Conf.CustomConverters {
 		res, err := f(src, dstTyp)
 		if err != nil {
-			return nil, errForFunction(fnName, "converter[%d]: %s", i, err.Error())
+			return nil, errForFunctionF(fnName, "converter[%d]: %s", i, err.Error())
 		}
 
 		if res != nil {
@@ -815,11 +815,11 @@ func (c *Conv) Convert(src interface{}, dstPtr interface{}) error {
 
 	dstValue := reflect.ValueOf(dstPtr)
 	if dstValue.Kind() != reflect.Ptr {
-		panic(errForFunction(fnName, "the destination value must be a pointer"))
+		panic(errForFunctionF(fnName, "the destination value must be a pointer"))
 	}
 
 	if dstValue.IsZero() {
-		panic(errForFunction(fnName, "the pointer must be initialized"))
+		panic(errForFunctionF(fnName, "the pointer must be initialized"))
 	}
 
 	if src == nil {
@@ -834,7 +834,7 @@ func (c *Conv) Convert(src interface{}, dstPtr interface{}) error {
 
 		res, err := f(src, dstValue.Type())
 		if err != nil {
-			return errForFunction(fnName, "converter[%d]: %s", i, err.Error())
+			return errForFunctionF(fnName, "converter[%d]: %s", i, err.Error())
 		}
 
 		if res != nil {
@@ -846,7 +846,7 @@ func (c *Conv) Convert(src interface{}, dstPtr interface{}) error {
 	for dstValue.Kind() == reflect.Ptr {
 		dstValue = dstValue.Elem()
 		if dstValue.Kind() == reflect.Invalid {
-			panic(errForFunction(fnName, "the underlying pointer must be initialized"))
+			panic(errForFunctionF(fnName, "the underlying pointer must be initialized"))
 		}
 	}
 

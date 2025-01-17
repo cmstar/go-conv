@@ -93,10 +93,17 @@ func errImaginaryPartLoss(v interface{}, dstType string) error {
 	return fmt.Errorf("lost imaginary part when converting %#v (%[1]T) to %s", v, dstType)
 }
 
+// errForFunctionF returns an error which is used by exported functions,
+// it is like errForFunction but format a message using fmt.Sprintf.
+func errForFunctionF(fn, msgFormat string, a ...interface{}) error {
+	msg := "conv." + fn + ": " + fmt.Sprintf(msgFormat, a...)
+	return errors.New(msg)
+}
+
 // errForFunction returns an error which is used by exported functions,
 // the error message contains the function name.
-func errForFunction(fn, msgFormat string, a ...interface{}) error {
-	msg := "conv." + fn + ": " + fmt.Sprintf(msgFormat, a...)
+func errForFunction(fn, msg string) error {
+	msg = "conv." + fn + ": " + msg
 	return errors.New(msg)
 }
 
