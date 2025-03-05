@@ -522,11 +522,20 @@ func (c *Conv) convertToMapValue(fv reflect.Value) (reflect.Value, error) {
 		fv = fv.Elem()
 	}
 
-	switch fv.Kind() {
-	case reflect.Invalid:
+	if fv.Kind() == reflect.Invalid {
 		// Will be ignored in the outer loop.
 		return reflect.ValueOf(nil), nil
+	}
 
+	if IsSimpleType(fv.Type()) {
+		res, err := c.SimpleToSimple(fv.Interface(), fv.Type())
+		if err != nil {
+			return reflect.Value{}, err
+		}
+		return reflect.ValueOf(res), nil
+	}
+
+	switch fv.Kind() {
 	case reflect.Struct:
 		v, err := c.StructToMap(fv.Interface())
 		if err != nil {
@@ -604,23 +613,9 @@ func (c *Conv) convertToMapValue(fv reflect.Value) (reflect.Value, error) {
 		// Extract the underlying value.
 		fv = reflect.ValueOf(fv.Interface())
 		return c.convertToMapValue(fv)
-
-	default:
-		if IsPrimitiveKind(fv.Kind()) {
-			res, err := c.simpleToPrimitive(fv.Interface(), fv.Kind())
-			if err != nil {
-				return reflect.Value{}, err
-			}
-			return reflect.ValueOf(res), nil
-		}
-
-		if !IsSimpleType(fv.Type()) {
-			return reflect.Value{}, fmt.Errorf("must be a simple type, got %v", fv.Kind())
-		}
-
-		// Consider convert types which are simple but non-primitive - such as time.Time - to primitive types?
-		return fv, nil
 	}
+
+	return reflect.Value{}, fmt.Errorf("conversion not supported on type %v", fv.Type())
 }
 
 func (c *Conv) determineSliceTypeForMapValue(srcSliceType reflect.Type) (dstSliceType reflect.Type, ok bool) {

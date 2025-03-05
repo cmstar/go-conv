@@ -754,16 +754,19 @@ func TestConv_StructToMap(t *testing.T) {
 	})
 
 	t.Run("simple", func(t *testing.T) {
+		now := time.Now()
 		check(t, args{
 			c: _defaultConv,
 			src: struct {
 				Str   string
 				Flt   float64
+				Time  time.Time
 				inner int
-			}{"aa", 0.5, 4},
+			}{"aa", 0.5, now, 4},
 			want: map[string]interface{}{
-				"Str": "aa",
-				"Flt": 0.5,
+				"Str":  "aa",
+				"Flt":  0.5,
+				"Time": now,
 			},
 			errRegex: "",
 		})
@@ -852,7 +855,7 @@ func TestConv_StructToMap(t *testing.T) {
 			c:        _defaultConv,
 			src:      struct{ C chan int }{make(chan int)},
 			want:     nil,
-			errRegex: "^conv.StructToMap: error on converting field C: must be a simple type, got chan$",
+			errRegex: "^conv.StructToMap: error on converting field C: conversion not supported on type chan",
 		})
 	})
 
@@ -885,7 +888,7 @@ func TestConv_StructToMap(t *testing.T) {
 			c:        _defaultConv,
 			src:      T{map[int]chan int{13: make(chan int)}},
 			want:     nil,
-			errRegex: `field In: value of key 13: must be a simple type, got chan`,
+			errRegex: `field In: value of key 13: conversion not supported on type chan`,
 		})
 	})
 
