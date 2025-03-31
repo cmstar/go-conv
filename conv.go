@@ -476,7 +476,7 @@ func (c *Conv) MapToMap(m interface{}, typ reflect.Type) (interface{}, error) {
 // Structs are converted to map[string]interface{} using Conv.StructToMap() recursively.
 //
 // Pointers:
-//   - Nils are ignored.
+//   - A nil pointer is converted to an empty interface with nil value.
 //   - Non-nil values pointed to are converted with f() .
 //
 // Other types not listed above are not supported and will result in an error.
@@ -506,7 +506,6 @@ func (c *Conv) StructToMap(v interface{}) (map[string]interface{}, error) {
 			return false
 		}
 
-		// If ff is nil value, the map index will not be set.
 		dst.SetMapIndex(reflect.ValueOf(fi.Name), ff)
 		return true
 	})
@@ -522,9 +521,9 @@ func (c *Conv) convertToMapValue(fv reflect.Value) (reflect.Value, error) {
 		fv = fv.Elem()
 	}
 
+	// reflect.Invalid if fv is a nil ptr. Return a value of an empty interface.
 	if fv.Kind() == reflect.Invalid {
-		// Will be ignored in the outer loop.
-		return reflect.ValueOf(nil), nil
+		return reflect.Zero(reflect.TypeOf((*any)(nil)).Elem()), nil
 	}
 
 	if IsSimpleType(fv.Type()) {

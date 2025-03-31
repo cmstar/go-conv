@@ -898,7 +898,7 @@ func TestConv_StructToMap(t *testing.T) {
 		check(t, args{
 			c:        _defaultConv,
 			src:      T{},
-			want:     map[string]interface{}{},
+			want:     map[string]interface{}{"In": nil},
 			errRegex: ``,
 		})
 	})
@@ -1488,7 +1488,10 @@ func TestConv_ConvertType(t *testing.T) {
 				struct{ A, B interface{} }{},
 				reflect.TypeOf(map[string]interface{}{}),
 			},
-			map[string]interface{}{},
+			map[string]interface{}{
+				"A": nil,
+				"B": nil,
+			},
 			"",
 		},
 		{
