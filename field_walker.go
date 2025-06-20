@@ -225,7 +225,14 @@ func (walker *FieldWalker) initFields() {
 			}
 
 			// Build the index sequence and path.
-			f.Index = append(buf.Index, f.Index...)
+			// Copy the sequence data to avoid using the same underlying array.
+			if len(buf.Index) > 0 {
+				seq := make([]int, 0, len(buf.Index)+len(f.Index))
+				seq = append(seq, buf.Index...)
+				seq = append(seq, f.Index...)
+				f.Index = seq
+			}
+
 			path := buf.Path
 			if path != "" {
 				path += "."

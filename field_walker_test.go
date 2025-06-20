@@ -118,6 +118,42 @@ func TestFieldWalker_WalkFields(t *testing.T) {
 			{"A", "A.A", []int{0, 0}, ""},
 		})
 	})
+
+	t.Run("deep", func(t *testing.T) {
+		type A struct {
+			A1, A2 int
+		}
+		type B struct {
+			B1, B2 int
+			A
+		}
+		type C struct {
+			C1, C2 int
+			B
+		}
+		type D struct {
+			D1, D2 int
+			C
+		}
+		type E struct {
+			E1, E2 int
+			D
+		}
+
+		walker := NewFieldWalker(reflect.TypeOf(E{}), "")
+		check(t, walker, []want{
+			{"E1", "E1", []int{0}, ""},
+			{"E2", "E2", []int{1}, ""},
+			{"D1", "D.D1", []int{2, 0}, ""},
+			{"D2", "D.D2", []int{2, 1}, ""},
+			{"C1", "D.C.C1", []int{2, 2, 0}, ""},
+			{"C2", "D.C.C2", []int{2, 2, 1}, ""},
+			{"B1", "D.C.B.B1", []int{2, 2, 2, 0}, ""},
+			{"B2", "D.C.B.B2", []int{2, 2, 2, 1}, ""},
+			{"A1", "D.C.B.A.A1", []int{2, 2, 2, 2, 0}, ""},
+			{"A2", "D.C.B.A.A2", []int{2, 2, 2, 2, 1}, ""},
+		})
+	})
 }
 
 func TestFieldWalker_WalkValues(t *testing.T) {
@@ -175,7 +211,7 @@ func TestFieldWalker_WalkValues(t *testing.T) {
 		}
 	})
 
-	t.Run("all", func(t *testing.T) {
+	t.Run("hiding", func(t *testing.T) {
 		type A struct {
 			A1 int
 			A2 int
