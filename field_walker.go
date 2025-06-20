@@ -21,8 +21,8 @@ var fieldWalkerCache syncMap
 //	    D int
 //	}
 //	type Eb struct {
-//	    B int // hided by T.B
-//	    Ec    // hided by T.Ec.D
+//	    B int // hidden by T.B
+//	    Ec    // hidden by T.Ec.D
 //	    C int
 //	}
 //	type T struct {
@@ -44,7 +44,7 @@ var fieldWalkerCache syncMap
 //
 //	type A struct {
 //	  A int
-//	  X int  // hided by T.B
+//	  X int  // hidden by T.B
 //	}
 //	type B struct {
 //	  B1 int // absent

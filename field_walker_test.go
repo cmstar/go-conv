@@ -79,8 +79,8 @@ func TestFieldWalker_WalkFields(t *testing.T) {
 			x int //lint:ignore U1000 Test unexported fields.
 		}
 		type Eb struct {
-			B  int // hided by T.B
-			Ec     // hided by T.Ec.D
+			B  int // hidden by T.B
+			Ec     // hidden by T.Ec.D
 			C  int
 		}
 		type T struct {
@@ -101,7 +101,7 @@ func TestFieldWalker_WalkFields(t *testing.T) {
 	t.Run("with-tag", func(t *testing.T) {
 		type A struct {
 			A int
-			X int // hided by T.B
+			X int // hidden by T.B
 		}
 		type B struct {
 			B1 int // absent
@@ -182,9 +182,9 @@ func TestFieldWalker_WalkValues(t *testing.T) {
 			x  int
 		}
 		type B struct {
-			A  // hided by C.A
+			A  // hidden by C.A
 			B1 int
-			A1 int // hided by C.A.A1
+			A1 int // hidden by C.A.A1
 		}
 		type C struct {
 			C1 int
