@@ -1763,3 +1763,62 @@ func TestConv_tryFlattenEmptyKeyMap(t *testing.T) {
 		})
 	}
 }
+
+// TestConv_MapToMapWithNilValues tests the MapToMap function handling nil values.
+func TestConv_mapToMapWithNilValues(t *testing.T) {
+	// Test data: map slice containing nil values
+	value := []map[string]interface{}{
+		{"name": "25"},
+		{"name": "56"},
+		{"name": "98"},
+		{"name": nil}, // This nil value may cause issues
+	}
+
+	// Target template type
+	template := []map[string]any{}
+
+	// Use ConvertType for conversion
+	result, err := _defaultConv.ConvertType(value, reflect.TypeOf(template))
+	if err != nil {
+		t.Fatalf("ConvertType failed: %v", err)
+	}
+
+	// Check results
+	resultSlice, ok := result.([]map[string]interface{})
+	if !ok {
+		t.Fatalf("Expected []map[string]interface{}, got %T", result)
+	}
+
+	// Verify result length should match original data
+	if len(resultSlice) != len(value) {
+		t.Errorf("Expected length %d, got %d", len(value), len(resultSlice))
+	}
+
+	// Verify each element
+	for i, original := range value {
+		if i >= len(resultSlice) {
+			t.Errorf("Missing element at index %d", i)
+			continue
+		}
+
+		converted := resultSlice[i]
+
+		// Check if key exists
+		originalName, originalExists := original["name"]
+		convertedName, convertedExists := converted["name"]
+
+		if originalExists != convertedExists {
+			t.Errorf("Index %d: key existence mismatch. Original has 'name': %v, Converted has 'name': %v",
+				i, originalExists, convertedExists)
+		}
+
+		if originalExists && convertedExists {
+			// If original value is nil, converted value should also be nil
+			if originalName == nil && convertedName != nil {
+				t.Errorf("Index %d: expected nil value, got %v", i, convertedName)
+			} else if originalName != nil && !reflect.DeepEqual(originalName, convertedName) {
+				t.Errorf("Index %d: value mismatch. Expected %v, got %v", i, originalName, convertedName)
+			}
+		}
+	}
+}

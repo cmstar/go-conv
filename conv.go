@@ -451,7 +451,18 @@ func (c *Conv) MapToMap(m interface{}, typ reflect.Type) (interface{}, error) {
 			return nil, errForFunctionF(fnName, "cannot covert value of key '%v' to %v: %v", srcKey, dstValueType, err.Error())
 		}
 
-		dst.SetMapIndex(reflect.ValueOf(dstKey), reflect.ValueOf(dstVal))
+		// Handle nil value case. When dstVal is nil, reflect.ValueOf(dstVal) returns zero reflect.Value,
+		// and SetMapIndex interprets zero reflect.Value as a delete key operation.
+		// To preserve nil values, we need to create a valid reflect.Value representing nil.
+		var dstValReflect reflect.Value
+		if dstVal == nil {
+			// Create a valid reflect.Value representing nil
+			dstValReflect = reflect.Zero(dstValueType)
+		} else {
+			dstValReflect = reflect.ValueOf(dstVal)
+		}
+
+		dst.SetMapIndex(reflect.ValueOf(dstKey), dstValReflect)
 	}
 
 	return dst.Interface(), nil
