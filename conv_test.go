@@ -584,136 +584,85 @@ func TestConv_MapToStruct(t *testing.T) {
 }
 
 func TestConv_MapToMap(t *testing.T) {
-	type args struct {
-		m      interface{}
-		dstTyp reflect.Type
+	run := func(v, dst, want interface{}) {
+		got, err := _defaultConv.MapToMap(v, reflect.TypeOf(dst))
+
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("want %v, got %v", want, got)
+		}
 	}
-	tests := []struct {
-		name     string
-		args     args
-		want     interface{}
-		errRegex string
-	}{
-		{
-			"nil",
-			args{
-				map[string]int(nil),
-				reflect.TypeOf(map[float32]int(nil)),
-			},
-			map[float32]int(nil),
-			"",
-		},
 
-		{
-			"si-si",
-			args{
-				map[string]int{
-					"a": 1,
-					"b": 2,
-					"c": 3,
-				},
-				reflect.TypeOf(map[string]int(nil)),
-			},
-			map[string]int{
-				"a": 1,
-				"b": 2,
-				"c": 3,
-			},
-			"",
-		},
+	t.Run("NilToNil", func(t *testing.T) {
+		run(map[string]int(nil), map[float32]int(nil), map[float32]int(nil))
+	})
 
-		{
-			"si-is",
-			args{
-				map[string]int{
-					"1":  11,
-					"2":  22,
-					"33": 3,
-				},
-				reflect.TypeOf(map[int]string(nil)),
-			},
-			map[int]string{
-				1:  "11",
-				2:  "22",
-				33: "3",
-			},
-			"",
-		},
+	t.Run("StringIntToStringInt", func(t *testing.T) {
+		v := map[string]int{
+			"a": 1,
+			"b": 2,
+			"c": 3,
+		}
+		run(v, map[string]int(nil), v)
+	})
 
-		{
-			"[]interface-interface",
-			args{
-				map[string]interface{}{
-					"1": []interface{}{1, 2, 3},
-				},
-				reflect.TypeOf(map[interface{}]interface{}(nil)),
-			},
-			map[interface{}]interface{}{
-				"1": []interface{}{1, 2, 3},
-			},
-			"",
-		},
+	t.Run("StringIntToIntString", func(t *testing.T) {
+		v := map[string]int{
+			"1":  11,
+			"2":  22,
+			"33": 3,
+		}
+		want := map[int]string{
+			1:  "11",
+			2:  "22",
+			33: "3",
+		}
+		run(v, map[int]string(nil), want)
+	})
 
-		{
-			"err-src",
-			args{
-				123,
-				reflect.TypeOf(map[int]string(nil)),
-			},
-			nil,
-			"must be a map",
-		},
+	t.Run("StringAnyToAnyAny", func(t *testing.T) {
+		v := map[string]interface{}{
+			"1":   []interface{}{1, 2, 3},
+			"nil": nil,
+		}
+		want := map[interface{}]interface{}{
+			"1":   []interface{}{1, 2, 3},
+			"nil": nil,
+		}
+		run(v, map[interface{}]interface{}(nil), want)
+	})
 
-		{
-			"err-typ",
-			args{
-				map[string]int{},
-				reflect.TypeOf(1),
-			},
-			nil,
-			"destination type must be map",
-		},
+	runErr := func(v, dst interface{}, errRegex string) {
+		got, err := _defaultConv.MapToMap(v, reflect.TypeOf(dst))
 
-		{
-			"err-key",
-			args{
-				map[string]int{"a": 1},
-				reflect.TypeOf(map[int]int{}),
-			},
-			nil,
-			"cannot covert key 'a' to int: .+",
-		},
+		if err == nil {
+			t.Errorf("expected error matches: %s, got %v", errRegex, got)
+		}
 
-		{
-			"err-elem",
-			args{
-				map[string]string{"aa": "x"},
-				reflect.TypeOf(map[string]int{}),
-			},
-			nil,
-			"cannot covert value of key 'aa' to int: .+",
-		},
+		if match, _ := regexp.MatchString(errRegex, err.Error()); !match {
+			t.Errorf("error = %v , must match %v",
+				strconv.Quote(err.Error()), strconv.Quote(errRegex))
+		}
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := _defaultConv.MapToMap(tt.args.m, tt.args.dstTyp)
 
-			if err != nil {
-				if tt.errRegex == "" {
-					t.Errorf("MapToMap() unexpected error = %v", err)
-				}
+	t.Run("ErrWrongSource", func(t *testing.T) {
+		runErr(123, map[int]string(nil), "must be a map")
+	})
 
-				if match, _ := regexp.MatchString(tt.errRegex, err.Error()); !match {
-					t.Errorf("MapToMap() error = %v , must match %v",
-						strconv.Quote(err.Error()), strconv.Quote(tt.errRegex))
-				}
-			}
+	t.Run("ErrWrongDestinationType", func(t *testing.T) {
+		runErr(map[string]int{}, 1, "destination type must be map")
+	})
 
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("MapToMap() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+	t.Run("ErrConvertKey", func(t *testing.T) {
+		runErr(map[string]int{"a": 1}, map[int]int(nil), "cannot covert key 'a' to int: .+")
+	})
+
+	t.Run("ErrConvertValue", func(t *testing.T) {
+		runErr(map[string]string{"aa": "x"}, map[string]int(nil), "cannot covert value of key 'aa' to int: .+")
+	})
 }
 
 func TestConv_StructToMap(t *testing.T) {
