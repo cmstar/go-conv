@@ -248,4 +248,41 @@ func TestFieldWalker_WalkValues(t *testing.T) {
 			{10, "B.B1"},
 		})
 	})
+
+	t.Run("embedding", func(t *testing.T) {
+		type A struct {
+			A1 int
+			A2 *int
+		}
+		type B struct {
+			B1 int
+			B2 *int
+		}
+		type C struct {
+			C1 int
+			C2 *int
+		}
+		type D struct {
+			A
+			*B
+			*C
+			D1 int
+		}
+
+		d := D{}
+		d.A1 = 3
+		d.C = &C{
+			C1: 11,
+		}
+		d.D1 = 33
+
+		walker := NewFieldWalker(reflect.TypeOf(d), "")
+		check(t, walker, reflect.ValueOf(d), []want{
+			{33, "D1"},
+			{3, "A.A1"},
+			{0, "A.A2"},
+			{11, "C.C1"},
+			{0, "C.C2"},
+		})
+	})
 }

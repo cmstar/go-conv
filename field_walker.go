@@ -138,7 +138,8 @@ func (walker *FieldWalker) WalkValues(value reflect.Value, callback func(FieldIn
 		for i := 0; i < len(index); i++ {
 			v = v.Field(index[i])
 
-			if embedded {
+			// Only skip when the nil pointer is an intermediate embedded struct, not the final field.
+			if embedded && i < len(index)-1 {
 				for v.Kind() == reflect.Ptr {
 					if v.IsNil() {
 						goto next
