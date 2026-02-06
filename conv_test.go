@@ -1405,7 +1405,7 @@ func TestConv_ConvertType_flatMap(t *testing.T) {
 			{S: "123"}: nil,
 		}
 		if !reflect.DeepEqual(got, want) {
-			t.Errorf("want %v, got %v", 87654321, got)
+			t.Errorf("want %v, got %v", want, got)
 		}
 	})
 }
